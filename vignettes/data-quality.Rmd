@@ -1,0 +1,224 @@
+---
+title: "Vaccination data quality checks"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vaccination data quality checks}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 7, fig.height = 5)
+```
+
+```{r setup}
+library(vaxsurvR)
+```
+
+## Checks return objects
+
+Every `check_*()` function returns a `vcs_validation`: a table of issues with a
+severity, a stable rule identifier, the record concerned and a message. Nothing
+is printed as a side effect, and nothing is modified.
+
+```{r}
+qa <- validate_vcs(vcs_example)
+qa
+```
+
+Four severity levels, ordered:
+
+```{r}
+vcs_severities()
+```
+
+```{r}
+summary(qa, by = "severity")
+```
+
+```{r}
+summary(qa, by = "rule")
+```
+
+```{r}
+plot(qa)
+```
+
+## Structural checks
+
+These answer "is this shaped like a household cluster survey?".
+
+```{r}
+summary(check_unique_ids(vcs_example))
+```
+
+```{r}
+issues(check_psu_structure(vcs_example))
+```
+
+`check_child_eligibility()` takes the age window as an argument, because it is a
+property of the survey protocol and not of the package:
+
+```{r}
+summary(check_child_eligibility(vcs_example, min_age_months = 12,
+                                max_age_months = 23))
+```
+
+## Date handling
+
+Card dates are frequently partial. `parse_vaccine_date()` says what each value
+is without inventing anything:
+
+```{r}
+parse_vaccine_date(c("2025-03-14", "2025-03", "2025", "", "31/02/2025",
+                     "vu sur carte"))
+```
+
+A partial date parses to `NA`. To resolve it you must name a rule, and the rule
+comes back attached to the result so it can be reported:
+
+```{r}
+p <- parse_vaccine_date(c("2025-03-14", "2025-02", "2025"))
+validate_partial_date(p)                                   # default: none
+validate_partial_date(p, rule = "midpoint")
+validate_partial_date(p, rule = "midpoint", min_precision = "year")
+```
+
+## Vaccination checks
+
+Each reads its parameters from the schedule.
+
+```{r}
+issues(check_prebirth_vaccination(vcs_example))[1:3, c("record_id", "value", "message")]
+```
+
+```{r}
+summary(check_vaccine_sequence(vcs_example))
+```
+
+```{r}
+summary(check_dose_intervals(vcs_example))
+```
+
+Tolerances are arguments, so a survey that accepts a few days of slack in card
+transcription can say so:
+
+```{r}
+nrow(issues(check_age_at_vaccination(vcs_example)))
+nrow(issues(check_age_at_vaccination(vcs_example, tolerance_days = 7)))
+```
+
+### Card and recall disagreement
+
+Disagreement between card and recall is expected in coverage surveys, so it is
+reported at `INFO` rather than as an error. What matters is the *rate*, and
+whether it clusters on one interviewer or PSU.
+
+```{r}
+summary(check_card_transcription(vcs_example))
+```
+
+A card date recorded where no card was seen is a different matter, and is an
+`ERROR`.
+
+## Flags at record level
+
+`flag_vaccine_inconsistencies()` collapses the checks to one row per
+child-vaccine record, ready to join onto the analysis table.
+
+```{r}
+flags <- flag_vaccine_inconsistencies(vcs_example)
+head(flags)
+table(flags$max_severity)
+```
+
+Note what this does *not* do: it does not remove the flagged records. A record
+that triggers a QA flag is a record to investigate, not a record to discard.
+
+## Cleaning with an audit trail
+
+The default ruleset flags and changes nothing.
+
+```{r}
+vcs_default_rules()
+```
+
+```{r}
+cleaned <- clean_vcs(vcs_example)
+identical(cleaned$vaccinations$card_date, vcs_example$vaccinations$card_date)
+```
+
+```{r}
+summary(cleaned$audit)
+```
+
+The log carries everything needed to reconstruct or reverse a decision:
+
+```{r}
+head(audit_changes(cleaned), 3)
+names(audit_changes(cleaned))
+```
+
+### Rules that do change values
+
+If you decide a value must go, say so explicitly, and the change is logged with
+the original value.
+
+```{r}
+rules <- vcs_ruleset(
+  vcs_rule(
+    "BLANK_FUTURE_DATES",
+    "Blank card dates recorded after the interview date",
+    level    = "vaccination",
+    where    = !is.na(card_date) & !is.na(interview_date) &
+                 card_date > interview_date,
+    variable = "card_date",
+    action   = "set_na",
+    severity = "ERROR"
+  )
+)
+
+strict <- clean_vcs(vcs_example, rules = rules)
+audit_changes(strict)[, c("record_id", "variable", "original_value",
+                          "new_value", "rule_id")]
+```
+
+Use `dry_run = TRUE` to see what a ruleset would do before letting it do it:
+
+```{r}
+dry <- clean_vcs(vcs_example, rules = rules, dry_run = TRUE)
+nrow(audit_changes(dry))
+identical(dry$vaccinations$card_date, vcs_example$vaccinations$card_date)
+```
+
+### Exporting the log
+
+```{r}
+f <- tempfile(fileext = ".csv")
+export_cleaning_log(cleaned, f)
+head(read.csv(f), 2)
+unlink(f)
+```
+
+`exclude_variables` redacts the original values of any variable that must not
+travel with the log.
+
+## Completeness
+
+Coverage estimates rest on determinable status, and card-documented coverage
+rests on cards being seen.
+
+```{r}
+card_completeness(vcs_example, by = ~stratum)
+```
+
+```{r}
+head(date_completeness(vcs_example, by = ~vaccine))
+```
+
+Missingness by interviewer is one of the clearest fieldwork signals a survey
+produces:
+
+```{r}
+head(vcs_missingness(vcs_example, variables = "card_seen", by = ~enumerator), 5)
+```

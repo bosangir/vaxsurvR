@@ -1,0 +1,105 @@
+---
+title: "Getting started with vaxsurvR"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with vaxsurvR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+```{r setup}
+library(vaxsurvR)
+```
+
+## What the package is for
+
+A vaccination coverage survey arrives as a wide export from a mobile
+data-collection platform: one row per interview, repeat groups flattened into
+column names, everything stored as text, and a vaccination card transcribed
+into dozens of status and date columns per child.
+
+Getting from that to a defensible coverage estimate involves a long series of
+decisions -- which variable means what, which dates are usable, what counts as
+a vaccinated child, whose weight applies. `vaxsurvR` makes each of those
+decisions an explicit, testable function call rather than a line buried in a
+cleaning script.
+
+## The object you work with
+
+`vcs_data` holds three standardised tables plus the untouched import.
+
+```{r}
+vcs_example
+```
+
+```{r}
+summary(vcs_example)
+```
+
+* `$households` -- one row per interview
+* `$children` -- one row per eligible child
+* `$vaccinations` -- one row per child-vaccine combination, in long form
+* `$raw` -- the import, never modified
+
+```{r}
+head(vcs_example$children[, c("child_id", "interview_id", "sex", "card_seen")])
+head(vcs_example$vaccinations[, c("child_id", "vaccine", "card_status", "card_date")])
+```
+
+## Observed and derived variables stay apart
+
+Any column the package computes carries the rule that produced it.
+
+```{r}
+derivation_rules(vcs_example)
+```
+
+## A first pass
+
+Validate, then look at what came back. Checks return objects, not messages.
+
+```{r}
+qa <- validate_vcs(vcs_example)
+qa
+```
+
+```{r}
+summary(qa, by = "severity")
+```
+
+```{r}
+head(issues(qa, severity = "CRITICAL"))
+```
+
+## A first estimate
+
+Derive a coverage indicator, build the design, estimate.
+
+```{r}
+d   <- derive_vaccination_status(vcs_example, evidence = "card_or_recall")
+des <- vcs_design(d)
+des
+```
+
+```{r}
+estimate_coverage(des, vaccines = c("BCG", "PENTA1", "PENTA3", "MCV1"))
+```
+
+Coverage falls along the schedule, which is what dropout measures:
+
+```{r}
+estimate_dropout(des, first = "PENTA1", last = "PENTA3")
+```
+
+## Where to go next
+
+* `vignette("preparing-a-survey")` -- mapping your own export
+* `vignette("data-quality")` -- the check suite and the audit trail
+* `vignette("deidentification")` -- privacy and disclosure control
+* `vignette("survey-analysis")` -- weights, strata and design effects
+* `vignette("coverage-indicators")` -- evidence definitions and dropout
+* `vignette("end-to-end")` -- the whole pipeline in one script

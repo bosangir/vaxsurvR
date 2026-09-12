@@ -1,0 +1,224 @@
+---
+title: "De-identification and disclosure control"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{De-identification and disclosure control}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+```{r setup}
+library(vaxsurvR)
+```
+
+## The salt
+
+Deterministic hashing lets you link a child across survey rounds without
+carrying their name. It only works as protection if the hash is salted with a
+secret: the space of plausible child identifiers is small enough that an
+unsalted hash can be reversed by enumeration in seconds.
+
+`vaxsurvR` therefore ships **no default salt**, and refuses to hash without
+one.
+
+```{r, error = TRUE}
+hash_identifier("CH0001")
+```
+
+In production the salt comes from the environment and never appears in a
+script:
+
+```r
+salt <- Sys.getenv("VAXSURVR_SALT")
+```
+
+For this vignette we use an obvious placeholder:
+
+```{r}
+salt <- "vignette-salt-not-for-production"
+```
+
+The salt is used and discarded. It is never written to the output data, the
+de-identification record, the object metadata, the cleaning log, or the
+console.
+
+## Finding what needs treating
+
+`identify_pii()` scans column names and values, and reports what the dictionary
+names outright.
+
+```{r}
+pii <- identify_pii(vcs_example_raw, vcs_example_dictionary)
+pii
+```
+
+`confidence == "certain"` means the dictionary said so. `"likely"` means a
+pattern matched. Neither is a substitute for reading the free-text fields: a
+caregiver name written into an observation box is invisible to any automated
+scan.
+
+## Hashing
+
+```{r}
+hash_identifier(c("CH0001", "CH0002"), salt = salt)
+```
+
+Deterministic given the salt:
+
+```{r}
+identical(
+  hash_identifier("CH0001", salt = salt),
+  hash_identifier("CH0001", salt = salt)
+)
+```
+
+A namespace separates uses of the same identifier, so a child identifier hashed
+for the coverage file and for the serology file cannot be cross-walked by
+someone holding only one of them:
+
+```{r}
+hash_identifier("CH0001", salt = salt, namespace = "coverage")
+hash_identifier("CH0001", salt = salt, namespace = "serology")
+```
+
+## Geography
+
+GPS coordinates are the highest-risk variable in a household survey: a
+coordinate pair plus an administrative unit identifies a dwelling.
+
+```{r}
+names(vcs_example$households)
+```
+
+Drop coordinates outright:
+
+```{r}
+d1 <- generalize_geography(vcs_example)
+setdiff(names(vcs_example$households), names(d1$households))
+```
+
+Or coarsen them, if within-cluster geometry matters to the analysis. Two
+decimal places is roughly a kilometre:
+
+```{r}
+d2 <- generalize_geography(vcs_example, round_gps = 2)
+head(d2$households$gps_lat, 3)
+```
+
+Truncate the administrative hierarchy, and suppress small cells:
+
+```{r}
+d3 <- generalize_geography(vcs_example, lowest_level = "district", min_cell = 10)
+intersect(c("province", "district", "health_zone", "health_area"),
+          names(d3$households))
+```
+
+## Age
+
+An exact date of birth is a quasi-identifier. Banding replaces it:
+
+```{r}
+d4 <- generalize_age(vcs_example, breaks = c(0, 12, 18, 24, Inf))
+table(d4$children$age_band, useNA = "ifany")
+"child_dob" %in% names(d4$children)
+```
+
+## Date shifting
+
+Shifting every date belonging to one household by the same offset preserves the
+intervals between doses -- the analytically useful quantity -- while the
+calendar dates are no longer real.
+
+```{r}
+shifted <- shift_dates(vcs_example, salt = salt, max_days = 30)
+
+a <- vcs_example$vaccinations
+b <- shifted$vaccinations
+cid <- a$child_id[!is.na(a$card_date)][1]
+
+data.frame(
+  original = a$card_date[a$child_id == cid],
+  shifted  = b$card_date[b$child_id == cid]
+)
+```
+
+Intervals are identical:
+
+```{r}
+identical(
+  diff(a$card_date[a$child_id == cid]),
+  diff(b$card_date[b$child_id == cid])
+)
+```
+
+The offsets are derived from the salt, so a team holding the salt can reproduce
+the shift and nobody else can recover it.
+
+## The whole pipeline
+
+```{r}
+anon <- deidentify_vcs(
+  vcs_example,
+  remove     = c("child_name", "caregiver_name", "telephone", "address"),
+  hash       = c("child_id", "household_id"),
+  salt       = salt,
+  age_bands  = c(0, 12, 18, 24, Inf),
+  geography  = list(lowest_level = "health_zone", round_gps = 2)
+)
+anon$deidentification$actions
+```
+
+The salt is absent from the record of what was done:
+
+```{r}
+anon$deidentification$salt
+anon$deidentification$salt_used
+```
+
+The dataset still analyses. Hashing preserves the child-vaccination link:
+
+```{r}
+head(anon$children$child_id, 3)
+all(anon$vaccinations$child_id %in% anon$children$child_id)
+```
+
+```{r}
+estimate_coverage(vcs_design(derive_vaccination_status(anon)),
+                  vaccines = c("BCG", "PENTA3"))
+```
+
+## Measuring what is left
+
+k-anonymity asks, for each record, how many other records share its combination
+of quasi-identifiers. Records in small groups are the ones that could be singled
+out by someone with background knowledge.
+
+```{r}
+assess_reidentification_risk(vcs_example)
+```
+
+Coarsening geography raises k:
+
+```{r}
+assess_reidentification_risk(
+  generalize_geography(vcs_example, lowest_level = "province")
+)
+```
+
+This is a screening tool. It measures only what the chosen quasi-identifiers
+capture, and it says nothing at all about identifiers hiding in free text.
+Read those fields before release.
+
+## Before a file leaves the team
+
+* `drop_raw = TRUE` (the default) removes the preserved raw import, which still
+  contains every identifier.
+* Export the cleaning log with `exclude_variables` set for anything sensitive.
+* Re-run `identify_pii()` on the file you are about to send, not on the one you
+  started from.
+* Keep the salt, the identifier crosswalk and the GPS offsets in a restricted
+  location, separate from the shareable file.

@@ -1,0 +1,196 @@
+---
+title: "Preparing a vaccination coverage survey"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Preparing a vaccination coverage survey}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+```{r setup}
+library(vaxsurvR)
+```
+
+## Two things to describe
+
+Before any data is touched, a survey needs two descriptions: the vaccination
+schedule it measures, and the mapping from its variable names to standardised
+concepts. Everything downstream reads those two objects, which is why no
+function in the package needs to know your form.
+
+## The schedule
+
+A schedule is a table of doses and the chronological rules that make a recorded
+dose plausible.
+
+```{r}
+schedule <- vcs_schedule(
+  vaccine               = c("BCG", "PENTA1", "PENTA2", "PENTA3", "MCV1"),
+  minimum_age_days      = c(0, 42, 70, 98, 270),
+  maximum_age_days      = c(28, 76, 104, 132, 330),
+  previous_dose         = c(NA, NA, "PENTA1", "PENTA2", NA),
+  minimum_interval_days = c(NA, NA, 28, 28, NA)
+)
+schedule
+```
+
+`minimum_age_days` and `minimum_interval_days` drive the data-quality checks;
+`maximum_age_days` drives timeliness only, and never invalidates a dose.
+Antigen and dose number are inferred from the names, so `PENTA1`, `PENTA2` and
+`PENTA3` become one series -- which is what `schedule_final_doses()` and
+`derive_fully_vaccinated()` use.
+
+```{r}
+schedule_final_doses(schedule)
+```
+
+`vcs_schedule_who()` is a template covering the antigens most surveys measure.
+Adapt it to the national EPI calendar; it is a starting point, not a standard.
+
+```{r}
+vcs_schedule_who(c("BCG", "PENTA1", "PENTA3", "MCV1"))
+```
+
+## The dictionary
+
+A dictionary maps source variable names onto the concepts in `vcs_concepts()`.
+
+```{r}
+head(vcs_concepts(), 12)
+```
+
+For a long-format export -- one row per child -- each concept is one column:
+
+```{r}
+vcs_dictionary(
+  child_id     = "childid",
+  household_id = "hh_id",
+  interview_id = "hh_id",
+  psu          = "cluster",
+  age_months   = "child_age_month",
+  sex          = "child_sex"
+)
+```
+
+### Repeat groups in wide exports
+
+Wide exports encode nesting in the column name: caregiver 1, child 2, vaccine
+4 becomes something like `CVH04_1_2`. Dictionaries express that with
+placeholders:
+
+| Placeholder | Meaning |
+|---|---|
+| `{c}` | caregiver, or first-level repeat index |
+| `{k}` | child, or second-level repeat index |
+| `{v}` | vaccine index, unpadded |
+| `{vv}` | vaccine index, zero-padded to two digits |
+| `{vaccine}` | vaccine name from the schedule |
+
+```{r}
+dict <- vcs_dictionary(
+  interview_id  = "KEY",
+  household_id  = "KEY",
+  psu           = "psu_id",
+  segment       = "segment_id",
+  stratum       = "stratum",
+  weight        = "final_weight",
+  child_id      = "EC_ID_{c}_{k}",
+  child_dob     = "EC_DOB_{c}_{k}",
+  sex           = "EC_SEX_{c}_{k}",
+  card_seen     = "CARD_{c}_{k}",
+  card_status   = "CVH{vv}_{c}_{k}",
+  card_date     = "CVH{vv}_date_{c}_{k}",
+  recall_status = "VR{vv}_{c}_{k}",
+  n_caregivers  = 2,
+  n_children    = 2
+)
+dict
+```
+
+`resolve_concept()` shows exactly which source columns a mapping expands to,
+which is the quickest way to catch a typo before importing anything:
+
+```{r}
+head(resolve_concept(dict, "card_date", schedule), 8)
+```
+
+### Coding conventions
+
+Surveys code yes/no differently. The dictionary carries the convention, so no
+check has to guess.
+
+```{r}
+vcs_dictionary(
+  card_seen       = "CVH_card_shown",
+  yes_values      = c("1", "Oui"),
+  no_values       = c("2", "Non"),
+  card_yes_values = c("1", "2")   # "yes, dated" and "yes, date incomplete"
+)
+```
+
+`card_yes_values` matters: many forms code a card-documented dose as 1 for
+"yes with date" and 2 for "yes, date illegible", with 3 for "no" and 98 for
+"don't know". Values outside `card_yes_values` and outside the no/yes lists
+become `NA` rather than being read as a negative.
+
+### Keeping the dictionary in a spreadsheet
+
+Survey teams usually maintain the mapping alongside the questionnaire.
+
+```{r}
+tmp <- tempfile(fileext = ".csv")
+write.csv(
+  data.frame(
+    concept = c("child_id", "psu", "card_status"),
+    source  = c("EC_ID_{c}_{k}", "psu_id", "CVH{vv}_{c}_{k}")
+  ),
+  tmp, row.names = FALSE
+)
+read_vcs_dictionary(tmp, n_caregivers = 2, n_children = 2)
+unlink(tmp)
+```
+
+## Importing
+
+`read_vcs()` reads everything as text by default. That is deliberate: letting R
+guess types is where a code like `"01"` silently becomes `1`, and where a
+partial date `"2025-03"` becomes `NA` before anything has a chance to record
+that it was partial.
+
+```{r}
+raw <- vcs_example_raw
+dim(raw)
+raw[1:3, c("KEY", "psu_id", "stratum", "final_weight")]
+```
+
+`read_surveycto()` adds the defaults wide SurveyCTO exports need, including a
+warning when the delimiter looks mis-detected -- a tab-separated file read as
+comma-separated parses to a single column, and it is better to be told.
+
+## Mapping
+
+```{r}
+mapped <- map_vcs_variables(vcs_example_raw, vcs_example_dictionary,
+                            vcs_example_schedule)
+mapped
+```
+
+A child record is created wherever any of its repeat-specific columns holds a
+value, so empty repeat slots do not become phantom children. Identifiers that
+are not mapped are constructed and marked as derived:
+
+```{r}
+subset(derivation_rules(mapped), variable == "child_id")
+```
+
+`strict = TRUE` turns a missing source column into an error rather than a
+warning, which is what you want in a scheduled pipeline.
+
+## What to do next
+
+Run `validate_vcs()` before anything else, and read
+`vignette("data-quality")`.

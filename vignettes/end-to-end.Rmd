@@ -1,0 +1,197 @@
+---
+title: "A reproducible end-to-end workflow"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{A reproducible end-to-end workflow}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+```{r setup}
+library(vaxsurvR)
+```
+
+This vignette runs the whole pipeline on the synthetic example, in the order a
+real analysis would.
+
+## 0. Describe the survey
+
+Two objects, defined once, that everything else reads.
+
+```{r}
+schedule   <- vcs_example_schedule
+dictionary <- vcs_example_dictionary
+schedule
+```
+
+## 1. Import
+
+```{r}
+raw <- vcs_example_raw
+dim(raw)
+```
+
+In a real analysis this is `read_vcs("survey.csv")` or
+`read_surveycto("export.csv")`.
+
+## 2. Map
+
+```{r}
+mapped <- map_vcs_variables(raw, dictionary, schedule)
+mapped
+```
+
+## 3. Validate
+
+```{r}
+qa <- validate_vcs(mapped)
+summary(qa, by = "severity")
+```
+
+Look at the critical issues before going further. In a scheduled pipeline this
+is where you would stop:
+
+```{r}
+if (has_issues(qa, "CRITICAL")) {
+  head(issues(qa, severity = "CRITICAL")[, c("rule_id", "record_id", "message")], 5)
+}
+```
+
+## 4. Clean, flagging rather than correcting
+
+```{r}
+cleaned <- clean_vcs(mapped)
+summary(cleaned$audit)
+```
+
+```{r}
+log_file <- tempfile(fileext = ".csv")
+export_cleaning_log(cleaned, log_file)
+```
+
+## 5. Derive the indicators
+
+```{r}
+d <- derive_vaccination_status(cleaned, evidence = "card_or_recall")
+d <- derive_fully_vaccinated(d, vaccines = c("BCG", "PENTA3", "MCV1"),
+                             name = "basic_full")
+d <- derive_zero_dose(d)
+d <- derive_timeliness(d)
+
+head(derivation_rules(d), 8)
+```
+
+## 6. De-identify
+
+```{r}
+salt <- "vignette-salt-not-for-production"   # in production: Sys.getenv("VAXSURVR_SALT")
+
+anon <- deidentify_vcs(
+  d,
+  remove    = c("child_name", "caregiver_name", "telephone", "address"),
+  hash      = c("child_id", "household_id"),
+  salt      = salt,
+  geography = list(lowest_level = "health_zone", round_gps = 2)
+)
+anon$deidentification$actions
+```
+
+```{r}
+assess_reidentification_risk(anon)
+```
+
+## 7. Check the weights, then build the design
+
+```{r}
+issues(validate_weights(anon))
+```
+
+```{r}
+design <- vcs_design(anon, ids = ~psu, strata = ~stratum, weights = ~weight)
+design
+```
+
+## 8. Estimate
+
+The standard presentation: each antigen by card, by recall, and by either
+source, with every child in every denominator.
+
+```{r}
+by_evidence <- estimate_coverage_by_evidence(
+  anon,
+  vaccines    = c("BCG", "PENTA1", "PENTA3", "MCV1"),
+  design_args = list(ids = ~psu, strata = ~stratum, weights = ~weight)
+)
+by_evidence[, c("indicator", "evidence", "numerator", "denominator",
+                "estimate", "conf_low", "conf_high")]
+```
+
+Single-definition estimates by domain:
+
+```{r}
+coverage <- estimate_coverage(
+  design,
+  vaccines = c("BCG", "PENTA1", "PENTA2", "PENTA3", "MCV1"),
+  by       = ~health_zone
+)
+head(coverage)
+```
+
+```{r}
+estimate_coverage(design, vaccines = c("BCG", "PENTA1", "PENTA3", "MCV1"))
+```
+
+```{r}
+estimate_zero_dose(design, by = ~stratum)
+```
+
+```{r}
+estimate_dropout(design, first = "PENTA1", last = "PENTA3", by = ~stratum)
+```
+
+```{r}
+design_effect(design, c("cov_PENTA1", "cov_PENTA3"))
+```
+
+## 9. Report
+
+```{r}
+report <- vcs_summary(d, design = design, by = ~stratum)
+report
+```
+
+```{r}
+report$coverage
+```
+
+```{r}
+out_dir <- file.path(tempdir(), "vcs-report")
+write_vcs_report(report, out_dir)
+list.files(out_dir)
+```
+
+```{r, include = FALSE}
+unlink(c(log_file, out_dir), recursive = TRUE)
+```
+
+## What makes this reproducible
+
+* The schedule and dictionary are data, so the same script runs against next
+  round's export without editing any function.
+* The raw import is preserved through mapping, so any derived value can be
+  traced to its source.
+* `derivation_rules()` states every definition applied.
+* `audit_changes()` states every value touched.
+* The evidence definition, the fully-vaccinated dose set, the zero-dose marker
+  and the dropout method are all explicit arguments that appear in the script
+  and in the output metadata.
+* The de-identification record lists what was done without ever containing the
+  salt.
+
+Run the script twice, and you get the same numbers. Hand it to a colleague with
+the salt, and they get the same numbers. Hand it to a reviewer without the
+salt, and they can still read every decision you made.

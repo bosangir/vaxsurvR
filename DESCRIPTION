@@ -1,0 +1,47 @@
+Package: vaxsurvR
+Title: Management, Quality Assurance, De-Identification and Analysis of
+    Vaccination Coverage Surveys
+Version: 0.1.1
+Authors@R: c(
+    person("Bernard Isekah", "Osangir", , "b.osangir@gmail.com", role = c("aut", "cre")),
+    person("vaxsurvR contributors", role = "ctb")
+  )
+Description: A reproducible, country-independent toolkit for household
+    vaccination coverage surveys. Provides a configurable variable-mapping
+    framework for arbitrary survey exports, structural and vaccination-specific
+    data-quality checks that return machine-readable issue objects, an auditable
+    cleaning trail, deterministic de-identification with disclosure control,
+    complex survey design construction on top of the 'survey' package, and
+    weighted coverage, zero-dose and dropout estimation with confidence
+    intervals and design effects.
+License: MIT + file LICENSE
+URL: https://github.com/bosangir/vaxsurvR
+BugReports: https://github.com/bosangir/vaxsurvR/issues
+Depends:
+    R (>= 4.1)
+Imports:
+    digest,
+    dplyr (>= 1.1.0),
+    graphics,
+    rlang (>= 1.1.0),
+    stats,
+    survey (>= 4.1),
+    tibble,
+    tools,
+    utils
+Suggests:
+    grDevices,
+    haven,
+    knitr,
+    openxlsx,
+    readxl,
+    rmarkdown,
+    testthat (>= 3.0.0),
+    withr
+VignetteBuilder:
+    knitr
+Config/testthat/edition: 3
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+Config/roxygen2/version: 8.0.0

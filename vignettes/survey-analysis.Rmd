@@ -1,0 +1,159 @@
+---
+title: "Complex survey analysis"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Complex survey analysis}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+```{r setup}
+library(vaxsurvR)
+```
+
+## The design is not optional
+
+A coverage survey is a stratified multi-stage cluster sample with unequal
+selection probabilities. Ignoring that gives standard errors that are too small,
+often by a factor of two or more, and -- if weights vary -- point estimates that
+are simply wrong for the population.
+
+`vaxsurvR` does not implement its own variance estimator. `vcs_design()` builds
+a `survey::svydesign` and everything downstream runs on it.
+
+## Building the design
+
+With a mapped dataset, the design variables are already standardised, so the
+call needs no arguments:
+
+```{r}
+d   <- derive_vaccination_status(vcs_example, evidence = "card_or_recall")
+des <- vcs_design(d)
+des
+```
+
+Or specify it explicitly:
+
+```{r}
+vcs_design(d, ids = ~psu, strata = ~stratum, weights = ~weight)
+```
+
+`nest = TRUE` (the default) tells `survey` that PSU labels restart within each
+stratum, which is the usual convention when clusters are numbered per stratum.
+
+### No weights is a loud condition, not a quiet one
+
+```{r}
+no_w <- d
+no_w$children$weight <- NULL
+no_w$households$weight <- NULL
+des_unweighted <- suppressWarnings(vcs_design(no_w))
+des_unweighted
+```
+
+The warning and the printed note are deliberate: an unweighted result is a
+description of the sample, not an estimate for the population, and it should
+never be reported as coverage.
+
+## Checking the weights first
+
+```{r}
+issues(validate_weights(vcs_example))
+```
+
+```{r}
+check_weight_distribution(vcs_example, by = ~stratum)
+```
+
+The coefficient of variation of the weights matters because it inflates the
+design effect by roughly `1 + cv^2` regardless of clustering. A survey with a
+CV of 1 has lost about half its effective sample size to weighting alone.
+
+### Trimming
+
+Trimming trades variance for bias. `vaxsurvR` never trims automatically.
+
+```{r}
+trimmed <- trim_weights(vcs_example, lower = 0.02, upper = 0.98)
+c(original = sum(vcs_example$children$weight),
+  trimmed  = sum(trimmed$children$weight_trimmed))
+```
+
+The rescaling keeps the weight total unchanged, and the original column stays.
+The rule is recorded:
+
+```{r}
+subset(derivation_rules(trimmed), variable == "weight_trimmed")$rule
+```
+
+If you trim, say so in the methods section.
+
+## Design effects
+
+```{r}
+design_effect(des, c("cov_BCG", "cov_PENTA1", "cov_PENTA3", "cov_MCV1"))
+```
+
+A design effect of 2 means the clustered sample of *n* children carries about
+as much information as a simple random sample of *n*/2. It is the number that
+tells you whether the sample size was adequate.
+
+## Single-PSU strata
+
+A stratum with one PSU has no within-stratum variance to estimate. The
+behaviour is an argument rather than a global option you have to remember:
+
+```{r}
+lonely <- d
+lonely$households$stratum[lonely$households$psu == lonely$households$psu[1]] <- "lonely"
+
+des_lonely <- vcs_design(lonely, lonely_psu = "adjust")
+estimate_coverage(des_lonely, vaccines = "BCG")
+```
+
+`"adjust"` centres such strata at the grand mean, which is conservative.
+`"fail"` refuses to estimate, which is sometimes what you want in a pipeline
+that should not silently paper over a design problem. The choice is stored on
+the design and re-applied at every estimate, so it cannot drift.
+
+## Domains
+
+Domain estimation subsets the *estimator*, not the data, so the variance
+accounts for the fact that domain sample sizes are random.
+
+```{r}
+estimate_coverage(des, vaccines = "PENTA3", by = ~stratum)
+```
+
+```{r}
+estimate_coverage(des, vaccines = "BCG", by = c("stratum", "sex"))
+```
+
+## Reading the output
+
+Every estimate table carries the same columns:
+
+| Column | Meaning |
+|---|---|
+| `numerator`, `denominator` | unweighted counts a reader can recount |
+| `estimate` | design-based weighted proportion |
+| `se` | design-based standard error |
+| `conf_low`, `conf_high` | confidence limits, clipped to [0, 1] |
+| `n_unweighted` | children contributing to the estimate |
+| `deff` | design effect where estimable |
+
+Where the design gives no usable standard error -- a domain with a single
+cluster, say -- a Wilson interval takes over rather than the row being blank.
+
+## Reaching the rest of the survey package
+
+```{r}
+svy <- as_survey_design(des)
+survey::svyby(~cov_PENTA3, ~stratum, svy, survey::svymean, na.rm = TRUE)
+```
+
+Anything `vaxsurvR` does not wrap is one call away.

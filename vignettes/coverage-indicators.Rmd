@@ -1,0 +1,237 @@
+---
+title: "Vaccination coverage indicators"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vaccination coverage indicators}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+```{r setup}
+library(vaxsurvR)
+```
+
+## What counts as vaccinated
+
+A coverage figure is meaningless without the definition behind it. The same
+survey yields materially different numbers depending on whether a caregiver's
+recollection counts as evidence.
+
+`vaxsurvR` grades the evidence for each dose:
+
+```{r}
+vcs_evidence_levels()
+```
+
+```{r}
+vcs_evidence_definitions()
+```
+
+```{r}
+graded <- derive_evidence(vcs_example)
+table(graded$vaccinations$evidence)
+```
+
+Note `"unknown"`: neither card nor recall information exists. That is different
+from evidence that the dose was not given, and it stays different.
+
+## Definitions give different answers
+
+```{r}
+defs <- c("card", "card_date", "recall", "card_or_recall")
+results <- lapply(defs, function(e) {
+  d <- derive_vaccination_status(vcs_example, evidence = e)
+  est <- estimate_coverage(vcs_design(d), vaccines = "PENTA1")
+  data.frame(evidence = e, estimate = round(est$estimate, 3),
+             denominator = est$denominator)
+})
+do.call(rbind, results)
+```
+
+`card` has a smaller denominator because children with no card have unknown
+status. That is the honest treatment: the alternative -- counting them as
+unvaccinated -- would understate coverage by the card-loss rate.
+
+If you do want that behaviour, you have to ask for it, and it is recorded:
+
+```{r}
+forced <- derive_vaccination_status(vcs_example, evidence = "card",
+                                    missing_as_unvaccinated = TRUE)
+subset(derivation_rules(forced), variable == "cov_PENTA1")$rule
+```
+
+## The three-way table
+
+Published coverage tables report each antigen by card, by recall, and by
+either source, with every enumerated child in every denominator. That is one
+call:
+
+```{r}
+estimate_coverage_by_evidence(vcs_example, vaccines = c("BCG", "PENTA3", "MCV1"))
+```
+
+The `denominator` argument makes the convention explicit. `"all"` (default)
+counts a child with no evidence from a source as not vaccinated *by that
+source*, so the card row is documented coverage among all children.
+`"determinable"` leaves such children out of that row, so the card row becomes
+coverage among card holders. They answer different questions; state which one
+a table uses.
+
+```{r}
+estimate_coverage_by_evidence(vcs_example, vaccines = "PENTA3",
+                              denominator = "determinable")
+```
+
+### When recall is asked per series
+
+Questionnaires often ask "has the child ever received Penta?" and then "how
+many times?", once per antigen rather than once per dose. `vcs_recall_map()`
+describes that structure and `apply_recall_map()` builds the columns the
+dictionary picks up through `recall_dictionary_entries()`; dose *n* is then
+recalled when the count is at least *n*. See `?apply_recall_map` for a worked
+example.
+
+## Coverage
+
+```{r}
+d   <- derive_vaccination_status(vcs_example, evidence = "card_or_recall")
+des <- vcs_design(d)
+
+estimate_coverage(des, vaccines = c("BCG", "PENTA1", "PENTA2", "PENTA3",
+                                    "MCV1"))
+```
+
+```{r}
+estimate_coverage(des, vaccines = "MCV1", by = ~stratum)
+```
+
+## Fully vaccinated
+
+There is no universal definition, so the dose set is an argument. The default
+is the last dose of every antigen series in the schedule.
+
+```{r}
+schedule_final_doses(vcs_example_schedule)
+```
+
+```{r}
+full <- derive_fully_vaccinated(vcs_example)
+estimate_full_coverage(vcs_design(full))
+```
+
+A narrower, and more commonly quoted, definition:
+
+```{r}
+basic <- derive_fully_vaccinated(
+  vcs_example,
+  vaccines = c("BCG", "PENTA3", "MCV1"),
+  name     = "basic_full"
+)
+estimate_full_coverage(vcs_design(basic), variable = "basic_full")
+```
+
+Whichever you use, the definition travels with the column:
+
+```{r}
+subset(derivation_rules(basic), variable == "basic_full")$rule
+```
+
+## Zero-dose children
+
+Conventionally a child who has received no dose of a DTP-containing vaccine.
+The marker antigen differs between programmes, so it is an argument.
+
+```{r}
+zd <- derive_zero_dose(vcs_example)
+estimate_zero_dose(vcs_design(zd), by = ~stratum)
+```
+
+```{r}
+subset(derivation_rules(zd), variable == "zero_dose")$rule
+```
+
+## Dropout
+
+Two definitions circulate, and they do not give the same answer.
+
+**Coverage difference** -- the classic programme indicator, computed from two
+marginal coverage estimates:
+
+```{r}
+estimate_dropout(des, first = "PENTA1", last = "PENTA3", method = "coverage")
+```
+
+**Individual histories** -- the proportion of children who received the first
+dose but not the last, among those who received the first:
+
+```{r}
+estimate_dropout(des, first = "PENTA1", last = "PENTA3", method = "individual")
+```
+
+The individual method is the better of the two: it uses each child's own
+history rather than the difference of two marginals, and its denominator is
+explicitly the children at risk of dropping out. The coverage method is what
+most programme reports quote. `vaxsurvR` computes both and labels which
+produced each row, so a report can state its choice.
+
+```{r}
+estimate_dropout(des, first = "BCG", last = "MCV1", by = ~stratum)
+```
+
+Standard programme indicators are just pairs:
+
+```{r}
+pairs <- list(c("PENTA1", "PENTA3"), c("BCG", "MCV1"), c("PENTA1", "MCV1"))
+do.call(rbind, lapply(pairs, function(p) {
+  estimate_dropout(des, p[1], p[2])[, c("indicator", "estimate", "conf_low",
+                                        "conf_high", "denominator")]
+}))
+```
+
+## Timeliness
+
+Coverage says whether a dose was received. Timeliness says whether it was
+received in the window where it protects.
+
+```{r}
+tl <- derive_timeliness(vcs_example)
+table(tl$vaccinations$timeliness, useNA = "ifany")
+```
+
+Only doses with both a date of birth and a usable card date can be classified;
+recall carries no date, so recall-only doses are `NA` rather than being counted
+as untimely.
+
+```{r}
+estimate_timely_coverage(vcs_design(tl),
+                         vaccines = c("BCG", "PENTA1", "PENTA3", "MCV1"))
+```
+
+## Card availability
+
+Card-documented coverage rests on cards being seen, so the availability rate
+belongs in the same table as the coverage it conditions.
+
+```{r}
+estimate_card_availability(vcs_design(vcs_example), by = ~stratum)
+```
+
+## Assembling a report
+
+```{r}
+rep <- vcs_coverage_report(des,
+                           vaccines = c("BCG", "PENTA1", "PENTA3", "MCV1"),
+                           by = ~stratum)
+rep
+```
+
+```{r}
+rep$dropout
+```
+
+`write_vcs_report()` writes the tables as CSVs or as one Excel workbook, ready
+for a Quarto, Word or Excel template of your choosing.

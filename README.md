@@ -124,6 +124,37 @@ estimate_coverage_by_evidence(vcs_example, vaccines = c("BCG", "PENTA3", "MCV1")
 estimate_dropout(des, first = "PENTA1", last = "PENTA3", by = ~stratum)
 ```
 
+## The full report in one call
+
+Version 0.2.0 adds every indicator of a WHO/VCQI-style coverage report --
+coverage and timeliness charts, dropout, interval and missed-opportunity
+tables shaded in proportion to the outcome, cumulative coverage curves,
+organ-pipe plots, BeSD tables, reasons not vaccinated -- and a parameterised
+R Markdown report that renders them to Word.
+
+```r
+library(vaxsurvR)
+
+# A SurveyCTO wide export of the DRC KC v9 questionnaire, mapped in one call.
+vcs <- kc9_prepare("DRC_VxCoverage_WIDE.csv", n_caregivers = 3, n_children = 2)
+vcs <- erase_illogical_dates(vcs)                 # VCQI date logic, audited
+des <- vcs_design(vcs, ids = ~psu)
+
+v <- estimate_vctc(vcs, design = des, vaccines = kc9_epi_doses())
+plot_vctc(v)                                      # the VCTC
+
+st  <- kc9_strata()
+tab <- estimate_stratified(des, function(x, by = NULL) estimate_dropout(x, "PENTA1", "PENTA3", by = by), st)
+plot_bar_table(tab, bar_measure("estimate", "denominator", label = "PENTA1-PENTA3
+Dropout (%)"))
+
+m <- derive_mosv(vcs)
+plot_mosv_children(m, by = "zone_label")
+
+render_coverage_report("DRC_VxCoverage_WIDE.csv", "Coverage_Report.docx", output_dir = "reports")
+use_coverage_report("reports/my_report.Rmd")     # copy the template to edit it
+```
+
 ## Design principles
 
 * **The raw import is never modified.** It is carried alongside the

@@ -1,0 +1,5 @@
+name: Vaccination coverage survey report (vaxsurvR)
+description: >
+  Full coverage-survey report (VCTCs, dropout, timeliness, MOSVs, BeSD, reasons
+  not vaccinated) rendered to Word with the Kongo Central theme.
+create_dir: true

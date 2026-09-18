@@ -43,7 +43,9 @@ print.vcs_estimate <- function(x, ...) {
 #' Estimate one weighted proportion over a domain
 #' @noRd
 svy_one <- function(design, variable, by = character(0), level = 0.95,
-                    na.rm = TRUE, deff = TRUE) {
+                    na.rm = TRUE, deff = TRUE,
+                    ci_method = getOption("vaxsurvR.ci_method", "normal")) {
+  ci_method <- match.arg(ci_method, c("normal", "wilson"))
   fml <- stats::as.formula(paste0("~", variable))
   des <- design$design
   raw <- design$data
@@ -118,22 +120,88 @@ svy_one <- function(design, variable, by = character(0), level = 0.95,
     out$deff[empty] <- NA_real_
   }
 
-  # Normal-approximation limits, clipped to [0, 1]; a Wilson interval takes
-  # over where the design gives no usable standard error.
-  lower <- pmax(0, out$estimate - z * out$se)
-  upper <- pmin(1, out$estimate + z * out$se)
-  degenerate <- is.na(out$se) | out$se == 0
-  if (any(degenerate)) {
-    wil <- vapply(which(degenerate), function(i) {
-      wilson_ci(out$numerator[i], out$denominator[i], level)
+  # Effective sample size and intracluster correlation. NEFF is the sample
+  # size a simple random sample would need to reach the same variance; ICC is
+  # the ANOVA estimator over the first-stage clusters, unweighted.
+  out$neff <- ifelse(is.na(out$deff) | out$deff <= 0, NA_real_,
+                     out$denominator / out$deff)
+  psu_col <- design$spec$ids[1]
+  out$icc <- vapply(out$domain, function(g) {
+    sel <- key == g & !is.na(vals)
+    if (is.null(psu_col) || !psu_col %in% names(raw) || sum(sel) < 2L) {
+      return(NA_real_)
+    }
+    icc_anova(vals[sel] > 0, as.character(raw[[psu_col]])[sel])
+  }, numeric(1))
+
+  if (ci_method == "wilson") {
+    # Survey-modified Wilson interval (Dean & Pagano 2015), the interval the
+    # WHO 2018 reference manual recommends: a Wilson interval evaluated at the
+    # design-effect-adjusted sample size.
+    wil <- vapply(seq_len(nrow(out)), function(i) {
+      p <- out$estimate[i]
+      n_eff <- if (is.na(out$deff[i]) || !is.finite(out$deff[i]) || out$deff[i] <= 0) {
+        out$denominator[i]
+      } else {
+        out$denominator[i] / out$deff[i]
+      }
+      if (is.na(p) || is.na(n_eff) || n_eff <= 0) {
+        return(c(lower = NA_real_, upper = NA_real_))
+      }
+      wilson_ci(p * n_eff, n_eff, level)
     }, numeric(2))
-    lower[degenerate] <- wil[1, ]
-    upper[degenerate] <- wil[2, ]
+    lower <- unname(wil[1, ])
+    upper <- unname(wil[2, ])
+  } else {
+    # Normal-approximation limits, clipped to [0, 1]; a Wilson interval takes
+    # over where the design gives no usable standard error.
+    lower <- pmax(0, out$estimate - z * out$se)
+    upper <- pmin(1, out$estimate + z * out$se)
+    degenerate <- is.na(out$se) | out$se == 0
+    if (any(degenerate)) {
+      wil <- vapply(which(degenerate), function(i) {
+        wilson_ci(out$numerator[i], out$denominator[i], level)
+      }, numeric(2))
+      lower[degenerate] <- wil[1, ]
+      upper[degenerate] <- wil[2, ]
+    }
   }
-  out$conf_low <- lower
-  out$conf_high <- upper
+  out$conf_low <- unname(lower)
+  out$conf_high <- unname(upper)
+  out$ci_method <- ci_method
   out$indicator <- variable
   out
+}
+
+#' ANOVA estimator of the intracluster correlation coefficient
+#'
+#' `rho = (MSB - MSW) / (MSB + (m0 - 1) MSW)` with `m0` the adjusted mean
+#' cluster size, on unweighted 0/1 outcomes. Negative estimates are floored
+#' at zero, as VCQI does.
+#' @noRd
+icc_anova <- function(y, cluster) {
+  y <- as.numeric(y)
+  ok <- !is.na(y) & !is.na(cluster)
+  y <- y[ok]
+  cluster <- cluster[ok]
+  k <- length(unique(cluster))
+  n <- length(y)
+  if (k < 2L || n <= k) {
+    return(NA_real_)
+  }
+  m <- tapply(y, cluster, length)
+  means <- tapply(y, cluster, mean)
+  grand <- mean(y)
+  ssb <- sum(m * (means - grand)^2)
+  ssw <- sum((y - means[cluster])^2)
+  msb <- ssb / (k - 1)
+  msw <- ssw / (n - k)
+  m0 <- (n - sum(m^2) / n) / (k - 1)
+  denom <- msb + (m0 - 1) * msw
+  if (!is.finite(denom) || denom <= 0) {
+    return(NA_real_)
+  }
+  max(0, (msb - msw) / denom)
 }
 
 #' @noRd
@@ -150,7 +218,9 @@ empty_estimate_row <- function(variable, domain, values) {
     numerator = sum(vals > 0, na.rm = TRUE),
     denominator = sum(!is.na(vals)),
     n_unweighted = sum(!is.na(vals)),
+    neff = NA_real_, icc = NA_real_,
     conf_low = NA_real_, conf_high = NA_real_,
+    ci_method = NA_character_,
     indicator = variable
   )
 }
@@ -162,7 +232,7 @@ tidy_estimate <- function(rows, by, extra = list()) {
     return(out)
   }
   front <- c("indicator", "domain", by, "numerator", "denominator", "estimate",
-             "se", "conf_low", "conf_high", "n_unweighted", "deff")
+             "se", "conf_low", "conf_high", "n_unweighted", "deff", "neff", "icc")
   front <- intersect(unique(front), names(out))
   out <- out[, c(front, setdiff(names(out), front)), drop = FALSE]
   for (nm in names(extra)) {
@@ -192,9 +262,16 @@ tidy_estimate <- function(rows, by, extra = list()) {
 #'   sum to the sample size.
 #' @param na.rm Exclude children whose status is unknown. `TRUE` by default:
 #'   unknown status is not counted as unvaccinated.
+#' @param ci_method `"normal"` (default) for symmetric limits on the design
+#'   standard error, or `"wilson"` for the survey-modified Wilson interval
+#'   recommended by the WHO 2018 reference manual (a Wilson interval at the
+#'   effective sample size `n / deff`). The global default can be changed with
+#'   `options(vaxsurvR.ci_method = "wilson")`.
 #' @return A tibble of class `vcs_estimate` with columns `indicator`, `domain`,
 #'   the domain variables, `numerator`, `denominator`, `estimate`, `se`,
-#'   `conf_low`, `conf_high`, `n_unweighted` and `deff`.
+#'   `conf_low`, `conf_high`, `n_unweighted`, `deff`, `neff` (effective sample
+#'   size), `icc` (ANOVA intracluster correlation over first-stage clusters)
+#'   and `ci_method`.
 #' @export
 #' @seealso [estimate_dropout()], [estimate_zero_dose()], [vcs_design()]
 #' @examples
@@ -210,11 +287,13 @@ estimate_coverage <- function(design,
                               prefix = "cov_",
                               level = 0.95,
                               deff = TRUE,
-                              na.rm = TRUE) {
+                              na.rm = TRUE,
+                              ci_method = getOption("vaxsurvR.ci_method", "normal")) {
   assert_string(prefix)
   assert_number(level, lower = 0.5, upper = 0.999)
   assert_flag(deff)
   assert_flag(na.rm)
+  ci_method <- match.arg(ci_method, c("normal", "wilson"))
   design <- coerce_design(design, vaccines, evidence, prefix)
   by <- as_column_names(by)
   if (length(by)) {
@@ -241,14 +320,16 @@ estimate_coverage <- function(design,
   }
 
   rows <- lapply(cols, function(v) {
-    out <- svy_one(design, v, by, level = level, na.rm = na.rm, deff = deff)
+    out <- svy_one(design, v, by, level = level, na.rm = na.rm, deff = deff,
+                   ci_method = ci_method)
     out$indicator <- sub(paste0("^", prefix), "", v)
     out
   })
   new_vcs_estimate(
     tidy_estimate(rows, by),
     meta = list(evidence = evidence, by = by, level = level,
-                weighted = design$spec$weighted, type = "coverage")
+                weighted = design$spec$weighted, type = "coverage",
+                ci_method = ci_method)
   )
 }
 
@@ -386,7 +467,8 @@ estimate_timely_coverage <- function(design, vaccines = NULL, by = NULL,
 #' @noRd
 estimate_indicator <- function(design, variable, by = NULL, type = "indicator",
                                coerce_logical = FALSE, level = 0.95,
-                               deff = TRUE, na.rm = TRUE) {
+                               deff = TRUE, na.rm = TRUE,
+                               ci_method = getOption("vaxsurvR.ci_method", "normal")) {
   des <- if (is_vcs_design(design)) design else {
     assert_vcs_data(design)
     vcs_design(design)
@@ -406,11 +488,11 @@ estimate_indicator <- function(design, variable, by = NULL, type = "indicator",
     assert_columns(des$data, by, arg = "design data")
   }
   rows <- list(svy_one(des, variable, by, level = level, na.rm = na.rm,
-                       deff = deff))
+                       deff = deff, ci_method = ci_method))
   new_vcs_estimate(
     tidy_estimate(rows, by),
     meta = list(type = type, by = by, level = level,
-                weighted = des$spec$weighted)
+                weighted = des$spec$weighted, ci_method = ci_method)
   )
 }
 

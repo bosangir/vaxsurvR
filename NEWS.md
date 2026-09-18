@@ -1,3 +1,71 @@
+# vaxsurvR 0.2.0
+
+## Report-grade indicators (VCQI conventions)
+
+Everything a full coverage-survey report needs, matching the indicator
+definitions and figure conventions of the WHO VCQI software, with no
+country, schedule or questionnaire assumption in the core functions.
+
+* **Timeliness and VCTCs.** `vcs_timing_rules()`, `derive_dose_timing()`,
+  `estimate_vctc()` and `plot_vctc()` classify every dated dose as too early,
+  timely, a little late or very late (BCG by day 5 / after one year as
+  special cases) and draw the Vaccination Coverage and Timeliness Chart with
+  coverage, 95% CI, N, NEFF, DEFF and ICC printed beside each bar, the
+  home-based-record line, and the fully-vaccinated footnote.
+* **Confidence intervals and design statistics.** `estimate_coverage()` and
+  every indicator estimator gain `ci_method = "wilson"` (survey-modified
+  Wilson intervals at the effective sample size, as recommended by the WHO
+  2018 reference manual) and report `neff` and an ANOVA `icc` per domain.
+* **Stratified tables.** `vcs_strata()` describes the ladder of domains a
+  report tabulates by (overall, nested administrative levels, residence, sex,
+  caregiver education) and `estimate_stratified()` applies any estimator to
+  it. `bar_measure()`, `plot_bar_table()` and `ft_bar_table()` render the
+  VCQI-style tables whose cells are shaded in proportion to the outcome,
+  with small-denominator suppression, as a figure or a native Word table.
+* **Intervals and curves.** `derive_dose_intervals()`,
+  `table_dose_intervals()` (percent of intervals < 28 and > 56 days),
+  `compute_ccc()` / `plot_ccc()` (cumulative coverage curves by age),
+  `compute_cic()` / `plot_cic()` (cumulative interval curves) and
+  `plot_organ_pipe()` (cluster-level coverage).
+* **Missed opportunities.** `derive_mosv()` reconstructs documented
+  vaccination visits and dose eligibility from card dates;
+  `estimate_mosv_visits()`, `estimate_mosv_children()`,
+  `mosv_time_to_correction()`, `plot_mosv_children()` and
+  `plot_mosv_correction()` give the visit-level and child-level MOSV
+  measures (RI_QUAL_08 / RI_QUAL_09) and the NM/AC/SC/NC summary.
+* **Behavioural and social drivers.** `vcs_besd_map()`, `derive_besd()`,
+  `estimate_besd()`, `besd_by_stratum()` and `plot_besd_by_stratum()`;
+  `tabulate_multiselect()`, `tabulate_categorical()`, `estimate_yes_no()`;
+  `reasons_by_stratum()` and `plot_reasons_table()` for the reasons a child
+  is not fully vaccinated, grouped by category.
+* **Data quality and design parameters.** `date_quality_summary()` and
+  `erase_illogical_dates()` (the VCQI replace-with-tick convention, audited),
+  `sample_size_parameters()` (observed coverage, cluster size, ICC, weight
+  CV, DEFF, NEFF against the values assumed) and `sample_achieved()`.
+* **Weights.** `compute_survey_weights()` implements the three-step method
+  of Annex J of the WHO 2018 manual for compact-segment cluster designs.
+* **Coverage figures.** `plot_coverage_by_stratum()` (one dose across the
+  stratifier ladder) and `plot_coverage_evidence()` (card / recall / either).
+
+## Report
+
+* `render_coverage_report()` renders a complete Word report -- executive
+  summary, methods, every table and figure above, annexes -- from a wide
+  export, styled with `inst/templates/vcs_reference.docx` (green headings,
+  Century Gothic). `use_coverage_report()` copies the parameterised
+  R Markdown template for editing; `coverage_report_template()` locates it;
+  `update_docx_fields()` fills the table of contents on Windows.
+* `vcs_palette()`, `vcs_font()`, `theme_vcs()`, `ft_vcs()` and
+  `save_vcs_plot()` define the visual identity once.
+
+## KC v9 questionnaire configuration
+
+* `kc9_schedule()`, `kc9_epi_doses()`, `kc9_dictionary()`,
+  `kc9_recall_map()`, `kc9_labels()`, `kc9_besd_map()`, `kc9_strata()`,
+  `kc9_link_roster()`, `kc9_caregiver_to_child()`, `attach_child_variables()`
+  and `kc9_prepare()` turn any SurveyCTO wide export of the DRC
+  `DRC_Vx_Coverage_KCv9` form into an analysis-ready `vcs_data` in one call.
+
 # vaxsurvR 0.1.1
 
 ## Caregiver recall

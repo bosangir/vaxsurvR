@@ -192,7 +192,7 @@ pipeline this is where you would stop:</p>
 <h2 id="clean-flagging-rather-than-correcting">4. Clean, flagging rather than correcting<a class="anchor" aria-label="anchor" href="#clean-flagging-rather-than-correcting"></a>
 </h2>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">cleaned</span> <span class="op">&lt;-</span> <span class="fu">clean_vcs</span><span class="op">(</span><span class="va">mapped</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">cleaned</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/clean_vcs.html">clean_vcs</a></span><span class="op">(</span><span class="va">mapped</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">cleaned</span><span class="op">$</span><span class="va">audit</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 5</span></span></span>
 <span><span class="co">#&gt;   rule_id           action severity n_records n_changes</span></span>
@@ -248,7 +248,7 @@ pipeline this is where you would stop:</p>
 <span><span class="co">#&gt; [3] "coarsened geography"                                                       </span></span>
 <span><span class="co">#&gt; [4] "dropped the preserved raw import"</span></span></code></pre></div>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">assess_reidentification_risk</span><span class="op">(</span><span class="va">anon</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/assess_reidentification_risk.html">assess_reidentification_risk</a></span><span class="op">(</span><span class="va">anon</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;vcs_risk: k-anonymity screening&gt;</span></span>
 <span><span class="co">#&gt;   quasi-identifiers: province, district, health_zone, residence, stratum, sex</span></span>
 <span><span class="co">#&gt;   records          : 256</span></span>
@@ -431,7 +431,7 @@ can be traced to its source.</li>
 <code>derivation_rules()</code> states every definition
 applied.</li>
 <li>
-<code>audit_changes()</code> states every value touched.</li>
+<code><a href="../reference/audit_changes.html">audit_changes()</a></code> states every value touched.</li>
 <li>The evidence definition, the fully-vaccinated dose set, the
 zero-dose marker and the dropout method are all explicit arguments that
 appear in the script and in the output metadata.</li>

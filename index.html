@@ -157,7 +157,7 @@ vcs_design()  -&gt;  estimate_coverage_by_evidence()              estimate with 
 <span></span>
 <span><span class="co"># 3. Import and map. The raw export is preserved untouched inside the result.</span></span>
 <span><span class="va">raw</span>    <span class="op">&lt;-</span> <span class="fu">read_vcs</span><span class="op">(</span><span class="st">"survey.csv"</span><span class="op">)</span></span>
-<span><span class="va">raw</span>    <span class="op">&lt;-</span> <span class="fu">apply_recall_map</span><span class="op">(</span><span class="va">raw</span>, <span class="va">recall</span>, <span class="va">schedule</span>, n_caregivers <span class="op">=</span> <span class="fl">3</span>, n_children <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="va">raw</span>    <span class="op">&lt;-</span> <span class="fu"><a href="reference/apply_recall_map.html">apply_recall_map</a></span><span class="op">(</span><span class="va">raw</span>, <span class="va">recall</span>, <span class="va">schedule</span>, n_caregivers <span class="op">=</span> <span class="fl">3</span>, n_children <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="va">mapped</span> <span class="op">&lt;-</span> <span class="fu">map_vcs_variables</span><span class="op">(</span><span class="va">raw</span>, <span class="va">dictionary</span>, <span class="va">schedule</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># 4. Check. Structured issues, not printed warnings.</span></span>
@@ -166,8 +166,8 @@ vcs_design()  -&gt;  estimate_coverage_by_evidence()              estimate with 
 <span><span class="fu">issues</span><span class="op">(</span><span class="va">qa</span>, severity <span class="op">=</span> <span class="st">"CRITICAL"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># 5. Clean. The default ruleset flags; it changes nothing.</span></span>
-<span><span class="va">clean</span> <span class="op">&lt;-</span> <span class="fu">clean_vcs</span><span class="op">(</span><span class="va">mapped</span><span class="op">)</span></span>
-<span><span class="fu">audit_changes</span><span class="op">(</span><span class="va">clean</span><span class="op">)</span>          <span class="co"># record, variable, before, after, rule, time</span></span>
+<span><span class="va">clean</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/clean_vcs.html">clean_vcs</a></span><span class="op">(</span><span class="va">mapped</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/audit_changes.html">audit_changes</a></span><span class="op">(</span><span class="va">clean</span><span class="op">)</span>          <span class="co"># record, variable, before, after, rule, time</span></span>
 <span></span>
 <span><span class="co"># 6. Derive. Say which evidence counts; the rule is stored on the column.</span></span>
 <span><span class="va">clean</span> <span class="op">&lt;-</span> <span class="fu">derive_vaccination_status</span><span class="op">(</span><span class="va">clean</span>, evidence <span class="op">=</span> <span class="st">"card_or_recall"</span><span class="op">)</span></span>
@@ -223,7 +223,7 @@ vcs_design()  -&gt;  estimate_coverage_by_evidence()              estimate with 
 <span></span>
 <span><span class="va">st</span>  <span class="op">&lt;-</span> <span class="fu">kc9_strata</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">tab</span> <span class="op">&lt;-</span> <span class="fu">estimate_stratified</span><span class="op">(</span><span class="va">des</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">by</span> <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="fu">estimate_dropout</span><span class="op">(</span><span class="va">x</span>, <span class="st">"PENTA1"</span>, <span class="st">"PENTA3"</span>, by <span class="op">=</span> <span class="va">by</span><span class="op">)</span>, <span class="va">st</span><span class="op">)</span></span>
-<span><span class="fu">plot_bar_table</span><span class="op">(</span><span class="va">tab</span>, <span class="fu">bar_measure</span><span class="op">(</span><span class="st">"estimate"</span>, <span class="st">"denominator"</span>, label <span class="op">=</span> <span class="st">"PENTA1-PENTA3</span></span>
+<span><span class="fu">plot_bar_table</span><span class="op">(</span><span class="va">tab</span>, <span class="fu"><a href="reference/bar_measure.html">bar_measure</a></span><span class="op">(</span><span class="st">"estimate"</span>, <span class="st">"denominator"</span>, label <span class="op">=</span> <span class="st">"PENTA1-PENTA3</span></span>
 <span><span class="st">Dropout (%)"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu">derive_mosv</span><span class="op">(</span><span class="va">vcs</span><span class="op">)</span></span>

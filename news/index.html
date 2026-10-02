@@ -85,31 +85,31 @@
 <li>
 <strong>Confidence intervals and design statistics.</strong> <code>estimate_coverage()</code> and every indicator estimator gain <code>ci_method = "wilson"</code> (survey-modified Wilson intervals at the effective sample size, as recommended by the WHO 2018 reference manual) and report <code>neff</code> and an ANOVA <code>icc</code> per domain.</li>
 <li>
-<strong>Stratified tables.</strong> <code>vcs_strata()</code> describes the ladder of domains a report tabulates by (overall, nested administrative levels, residence, sex, caregiver education) and <code>estimate_stratified()</code> applies any estimator to it. <code>bar_measure()</code>, <code>plot_bar_table()</code> and <code>ft_bar_table()</code> render the VCQI-style tables whose cells are shaded in proportion to the outcome, with small-denominator suppression, as a figure or a native Word table.</li>
+<strong>Stratified tables.</strong> <code>vcs_strata()</code> describes the ladder of domains a report tabulates by (overall, nested administrative levels, residence, sex, caregiver education) and <code>estimate_stratified()</code> applies any estimator to it. <code><a href="../reference/bar_measure.html">bar_measure()</a></code>, <code>plot_bar_table()</code> and <code>ft_bar_table()</code> render the VCQI-style tables whose cells are shaded in proportion to the outcome, with small-denominator suppression, as a figure or a native Word table.</li>
 <li>
-<strong>Intervals and curves.</strong> <code>derive_dose_intervals()</code>, <code>table_dose_intervals()</code> (percent of intervals &lt; 28 and &gt; 56 days), <code>compute_ccc()</code> / <code>plot_ccc()</code> (cumulative coverage curves by age), <code>compute_cic()</code> / <code>plot_cic()</code> (cumulative interval curves) and <code>plot_organ_pipe()</code> (cluster-level coverage).</li>
+<strong>Intervals and curves.</strong> <code>derive_dose_intervals()</code>, <code>table_dose_intervals()</code> (percent of intervals &lt; 28 and &gt; 56 days), <code><a href="../reference/compute_ccc.html">compute_ccc()</a></code> / <code>plot_ccc()</code> (cumulative coverage curves by age), <code><a href="../reference/compute_cic.html">compute_cic()</a></code> / <code>plot_cic()</code> (cumulative interval curves) and <code>plot_organ_pipe()</code> (cluster-level coverage).</li>
 <li>
 <strong>Missed opportunities.</strong> <code>derive_mosv()</code> reconstructs documented vaccination visits and dose eligibility from card dates; <code>estimate_mosv_visits()</code>, <code>estimate_mosv_children()</code>, <code>mosv_time_to_correction()</code>, <code>plot_mosv_children()</code> and <code>plot_mosv_correction()</code> give the visit-level and child-level MOSV measures (RI_QUAL_08 / RI_QUAL_09) and the NM/AC/SC/NC summary.</li>
 <li>
-<strong>Behavioural and social drivers.</strong> <code>vcs_besd_map()</code>, <code>derive_besd()</code>, <code>estimate_besd()</code>, <code>besd_by_stratum()</code> and <code>plot_besd_by_stratum()</code>; <code>tabulate_multiselect()</code>, <code>tabulate_categorical()</code>, <code>estimate_yes_no()</code>; <code>reasons_by_stratum()</code> and <code>plot_reasons_table()</code> for the reasons a child is not fully vaccinated, grouped by category.</li>
+<strong>Behavioural and social drivers.</strong> <code>vcs_besd_map()</code>, <code>derive_besd()</code>, <code>estimate_besd()</code>, <code><a href="../reference/besd_by_stratum.html">besd_by_stratum()</a></code> and <code>plot_besd_by_stratum()</code>; <code>tabulate_multiselect()</code>, <code>tabulate_categorical()</code>, <code>estimate_yes_no()</code>; <code>reasons_by_stratum()</code> and <code>plot_reasons_table()</code> for the reasons a child is not fully vaccinated, grouped by category.</li>
 <li>
 <strong>Data quality and design parameters.</strong> <code>date_quality_summary()</code> and <code>erase_illogical_dates()</code> (the VCQI replace-with-tick convention, audited), <code>sample_size_parameters()</code> (observed coverage, cluster size, ICC, weight CV, DEFF, NEFF against the values assumed) and <code>sample_achieved()</code>.</li>
 <li>
-<strong>Weights.</strong> <code>compute_survey_weights()</code> implements the three-step method of Annex J of the WHO 2018 manual for compact-segment cluster designs.</li>
+<strong>Weights.</strong> <code><a href="../reference/compute_survey_weights.html">compute_survey_weights()</a></code> implements the three-step method of Annex J of the WHO 2018 manual for compact-segment cluster designs.</li>
 <li>
 <strong>Coverage figures.</strong> <code>plot_coverage_by_stratum()</code> (one dose across the stratifier ladder) and <code>plot_coverage_evidence()</code> (card / recall / either).</li>
 </ul></div>
 <div class="section level3">
 <h3 id="report-0-2-0">Report<a class="anchor" aria-label="anchor" href="#report-0-2-0"></a></h3>
 <ul><li>
-<code>render_coverage_report()</code> renders a complete Word report – executive summary, methods, every table and figure above, annexes – from a wide export, styled with <code>inst/templates/vcs_reference.docx</code> (green headings, Century Gothic). <code>use_coverage_report()</code> copies the parameterised R Markdown template for editing; <code>coverage_report_template()</code> locates it; <code>update_docx_fields()</code> fills the table of contents on Windows.</li>
+<code>render_coverage_report()</code> renders a complete Word report – executive summary, methods, every table and figure above, annexes – from a wide export, styled with <code>inst/templates/vcs_reference.docx</code> (green headings, Century Gothic). <code>use_coverage_report()</code> copies the parameterised R Markdown template for editing; <code><a href="../reference/coverage_report_template.html">coverage_report_template()</a></code> locates it; <code>update_docx_fields()</code> fills the table of contents on Windows.</li>
 <li>
 <code>vcs_palette()</code>, <code>vcs_font()</code>, <code>theme_vcs()</code>, <code>ft_vcs()</code> and <code>save_vcs_plot()</code> define the visual identity once.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="kc-v9-questionnaire-configuration-0-2-0">KC v9 questionnaire configuration<a class="anchor" aria-label="anchor" href="#kc-v9-questionnaire-configuration-0-2-0"></a></h3>
 <ul><li>
-<code>kc9_schedule()</code>, <code>kc9_epi_doses()</code>, <code>kc9_dictionary()</code>, <code>kc9_recall_map()</code>, <code>kc9_labels()</code>, <code>kc9_besd_map()</code>, <code>kc9_strata()</code>, <code>kc9_link_roster()</code>, <code>kc9_caregiver_to_child()</code>, <code>attach_child_variables()</code> and <code>kc9_prepare()</code> turn any SurveyCTO wide export of the DRC <code>DRC_Vx_Coverage_KCv9</code> form into an analysis-ready <code>vcs_data</code> in one call.</li>
+<code>kc9_schedule()</code>, <code>kc9_epi_doses()</code>, <code>kc9_dictionary()</code>, <code>kc9_recall_map()</code>, <code>kc9_labels()</code>, <code>kc9_besd_map()</code>, <code>kc9_strata()</code>, <code>kc9_link_roster()</code>, <code>kc9_caregiver_to_child()</code>, <code><a href="../reference/attach_child_variables.html">attach_child_variables()</a></code> and <code>kc9_prepare()</code> turn any SurveyCTO wide export of the DRC <code>DRC_Vx_Coverage_KCv9</code> form into an analysis-ready <code>vcs_data</code> in one call.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -119,7 +119,7 @@
 <ul><li>Recall questions rarely mirror the card block one-for-one. New concepts <code>recall_ever</code> and <code>recall_count</code> describe the common “ever received?” + “how many times?” structure asked once per antigen series; dose <em>n</em> is recalled when the count is at least <em>n</em>, and a per-dose <code>recall_status</code> answer overrides the series answer where both exist.</li>
 <li>A new <code>{antigen}</code> placeholder resolves vaccine-level templates once per antigen series.</li>
 <li>
-<code>vcs_recall_map()</code> and <code>apply_recall_map()</code> turn a questionnaire crosswalk into the standardised columns the dictionary picks up via <code>recall_dictionary_entries()</code>.</li>
+<code>vcs_recall_map()</code> and <code><a href="../reference/apply_recall_map.html">apply_recall_map()</a></code> turn a questionnaire crosswalk into the standardised columns the dictionary picks up via <code>recall_dictionary_entries()</code>.</li>
 <li>
 <code>count_dk_values</code> on the dictionary keeps don’t-know codes out of dose counts.</li>
 </ul></div>
@@ -157,8 +157,8 @@
 <h3 id="validation-0-1-0">Validation<a class="anchor" aria-label="anchor" href="#validation-0-1-0"></a></h3>
 <ul><li>
 <code>validate_vcs()</code> runs the structural and vaccination check suites and returns a <code>vcs_validation</code> object with <code>issues()</code>, <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> and <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> methods and four severity levels.</li>
-<li>Structural checks: <code>check_required_variables()</code>, <code>check_unique_ids()</code>, <code>check_duplicates()</code>, <code>check_household_structure()</code>, <code>check_child_eligibility()</code>, <code>check_psu_structure()</code>, <code>check_segment_structure()</code>.</li>
-<li>Vaccination checks: <code>check_vaccine_dates()</code>, <code>check_future_dates()</code>, <code>check_prebirth_vaccination()</code>, <code>check_age_at_vaccination()</code>, <code>check_vaccine_sequence()</code>, <code>check_dose_intervals()</code>, <code>check_duplicate_doses()</code>, <code>check_card_transcription()</code>, and <code>flag_vaccine_inconsistencies()</code> to collapse them to record level.</li>
+<li>Structural checks: <code><a href="../reference/check_required_variables.html">check_required_variables()</a></code>, <code><a href="../reference/check_unique_ids.html">check_unique_ids()</a></code>, <code><a href="../reference/check_duplicates.html">check_duplicates()</a></code>, <code><a href="../reference/check_household_structure.html">check_household_structure()</a></code>, <code><a href="../reference/check_child_eligibility.html">check_child_eligibility()</a></code>, <code><a href="../reference/check_psu_structure.html">check_psu_structure()</a></code>, <code><a href="../reference/check_segment_structure.html">check_segment_structure()</a></code>.</li>
+<li>Vaccination checks: <code><a href="../reference/check_vaccine_dates.html">check_vaccine_dates()</a></code>, <code><a href="../reference/check_future_dates.html">check_future_dates()</a></code>, <code><a href="../reference/check_prebirth_vaccination.html">check_prebirth_vaccination()</a></code>, <code><a href="../reference/check_age_at_vaccination.html">check_age_at_vaccination()</a></code>, <code><a href="../reference/check_vaccine_sequence.html">check_vaccine_sequence()</a></code>, <code><a href="../reference/check_dose_intervals.html">check_dose_intervals()</a></code>, <code><a href="../reference/check_duplicate_doses.html">check_duplicate_doses()</a></code>, <code><a href="../reference/check_card_transcription.html">check_card_transcription()</a></code>, and <code>flag_vaccine_inconsistencies()</code> to collapse them to record level.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="dates-0-1-0">Dates<a class="anchor" aria-label="anchor" href="#dates-0-1-0"></a></h3>
@@ -167,7 +167,7 @@
 <li>
 <code>validate_partial_date()</code> resolves partial dates only under an explicitly chosen rule, and records which one.</li>
 <li>
-<code>derive_age_at_vaccination()</code> and <code>classify_vaccination_timeliness()</code>.</li>
+<code>derive_age_at_vaccination()</code> and <code><a href="../reference/classify_vaccination_timeliness.html">classify_vaccination_timeliness()</a></code>.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="derivation-0-1-0">Derivation<a class="anchor" aria-label="anchor" href="#derivation-0-1-0"></a></h3>
@@ -183,20 +183,20 @@
 <ul><li>
 <code>vcs_rule()</code> and <code>vcs_ruleset()</code> define cleaning rules; <code>vcs_default_rules()</code> flags without changing values.</li>
 <li>
-<code>clean_vcs()</code> applies them and attaches a <code>vcs_audit</code> trail; <code>audit_changes()</code> and <code>export_cleaning_log()</code> read and export it.</li>
+<code><a href="../reference/clean_vcs.html">clean_vcs()</a></code> applies them and attaches a <code>vcs_audit</code> trail; <code><a href="../reference/audit_changes.html">audit_changes()</a></code> and <code>export_cleaning_log()</code> read and export it.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="de-identification-0-1-0">De-identification<a class="anchor" aria-label="anchor" href="#de-identification-0-1-0"></a></h3>
 <ul><li>
 <code>identify_pii()</code>, <code>remove_direct_identifiers()</code>, <code>hash_identifier()</code>, <code>generalize_age()</code>, <code>generalize_geography()</code>, <code>shift_dates()</code> and <code>deidentify_vcs()</code>.</li>
 <li>
-<code>assess_reidentification_risk()</code> computes k-anonymity over quasi-identifiers.</li>
+<code><a href="../reference/assess_reidentification_risk.html">assess_reidentification_risk()</a></code> computes k-anonymity over quasi-identifiers.</li>
 <li>No default salt is shipped, and the salt is never written to data, logs, metadata or console.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="design-and-estimation-0-1-0">Design and estimation<a class="anchor" aria-label="anchor" href="#design-and-estimation-0-1-0"></a></h3>
 <ul><li>
-<code>vcs_design()</code> builds a <code><a href="https://rdrr.io/pkg/survey/man/svydesign.html" class="external-link">survey::svydesign</a></code> over the child-level table; <code>validate_weights()</code>, <code>check_weight_distribution()</code>, <code>trim_weights()</code> and <code>design_effect()</code> support it.</li>
+<code>vcs_design()</code> builds a <code><a href="https://rdrr.io/pkg/survey/man/svydesign.html" class="external-link">survey::svydesign</a></code> over the child-level table; <code>validate_weights()</code>, <code><a href="../reference/check_weight_distribution.html">check_weight_distribution()</a></code>, <code>trim_weights()</code> and <code>design_effect()</code> support it.</li>
 <li>
 <code>estimate_coverage()</code>, <code>estimate_antigen_coverage()</code>, <code>estimate_full_coverage()</code>, <code>estimate_zero_dose()</code>, <code>estimate_card_availability()</code>, <code>estimate_timely_coverage()</code> and <code>estimate_dropout()</code> return tidy estimates with numerators, denominators, standard errors, confidence limits, unweighted sample sizes and design effects.</li>
 <li>
@@ -205,7 +205,7 @@
 <div class="section level3">
 <h3 id="completeness-and-reporting-0-1-0">Completeness and reporting<a class="anchor" aria-label="anchor" href="#completeness-and-reporting-0-1-0"></a></h3>
 <ul><li>
-<code>vcs_missingness()</code>, <code>coverage_completeness()</code>, <code>card_completeness()</code> and <code>date_completeness()</code>.</li>
+<code>vcs_missingness()</code>, <code><a href="../reference/coverage_completeness.html">coverage_completeness()</a></code>, <code><a href="../reference/card_completeness.html">card_completeness()</a></code> and <code>date_completeness()</code>.</li>
 <li>
 <code>vcs_summary()</code>, <code>vcs_quality_report()</code>, <code>vcs_coverage_report()</code> and <code>write_vcs_report()</code>.</li>
 </ul></div>

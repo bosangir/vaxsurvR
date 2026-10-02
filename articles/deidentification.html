@@ -318,7 +318,7 @@ link:</p>
 combination of quasi-identifiers. Records in small groups are the ones
 that could be singled out by someone with background knowledge.</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">assess_reidentification_risk</span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/assess_reidentification_risk.html">assess_reidentification_risk</a></span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;vcs_risk: k-anonymity screening&gt;</span></span>
 <span><span class="co">#&gt;   quasi-identifiers: province, district, health_zone, health_area, residence, stratum, sex</span></span>
 <span><span class="co">#&gt;   records          : 256</span></span>
@@ -329,7 +329,7 @@ that could be singled out by someone with background knowledge.</p>
 <span><span class="co">#&gt;   Consider generalize_geography() or generalize_age() before release.</span></span></code></pre></div>
 <p>Coarsening geography raises k:</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">assess_reidentification_risk</span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/assess_reidentification_risk.html">assess_reidentification_risk</a></span><span class="op">(</span></span>
 <span>  <span class="fu">generalize_geography</span><span class="op">(</span><span class="va">vcs_example</span>, lowest_level <span class="op">=</span> <span class="st">"province"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;vcs_risk: k-anonymity screening&gt;</span></span>

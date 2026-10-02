@@ -1,7 +1,7 @@
 Package: vaxsurvR
 Title: Management, Quality Assurance, De-Identification and Analysis of
     Vaccination Coverage Surveys
-Version: 0.2.0
+Version: 0.2.1
 Authors@R: c(
     person("Bernard Isekah", "Osangir", , "b.osangir@gmail.com", role = c("aut", "cre")),
     person("vaxsurvR contributors", role = "ctb")
@@ -33,6 +33,7 @@ Imports:
     utils
 Suggests:
     flextable,
+    ggrepel,
     officer,
     ragg,
     systemfonts,
@@ -42,6 +43,7 @@ Suggests:
     openxlsx,
     readxl,
     rmarkdown,
+    sf,
     testthat (>= 3.0.0),
     withr
 VignetteBuilder:

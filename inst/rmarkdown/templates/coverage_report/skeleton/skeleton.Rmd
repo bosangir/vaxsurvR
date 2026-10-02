@@ -1,33 +1,8 @@
 ---
-title: "`r params$title`"
-subtitle: "`r params$subtitle`"
-author: "`r params$prepared_by`"
+title: "Vaccination Coverage Survey — Kongo Central Province, DRC 2026"
+subtitle: "Final report on routine immunization coverage among children aged 12–23 months"
+author: "University of Kinshasa (UNIKIN) — Data Quality and Quality Assurance Unit"
 date: "`r format(Sys.Date(), '%d %B %Y')`"
-params:
-  title: "Vaccination Coverage Survey — Kongo Central Province, DRC 2026"
-  subtitle: "Final report on routine immunization coverage among children aged 12–23 months"
-  prepared_by: "University of Kinshasa (UNIKIN) — Data Quality and Quality Assurance Unit"
-  partners: !r c("Survey partner" = "University of Kinshasa (UNIKIN)", "Principal investigator" = "Professor Trésor Zola Matuvanga", "Technical partner" = "Biostat Global Consulting (BGC)", "Funding and oversight" = "GiveWell", "Data source" = "Data export from SurveyCTO")
-  data_file: ""
-  study_area: "Kongo Central Province"
-  country: "Democratic Republic of the Congo"
-  survey_year: 2026
-  n_caregivers: 3
-  n_children: 2
-  n_roster: 2
-  weight_var: ~
-  stratum_var: ~
-  frame_file: ~
-  program_zones: ~
-  targets_file: ~
-  evidence: "card_or_recall"
-  fully_vaccinated_doses: !r c("BCG", "OPV1", "OPV2", "OPV3", "PENTA1", "PENTA2", "PENTA3", "PCV1", "PCV2", "PCV3", "MCV1", "YF")
-  mosv_doses: !r c("BCG", "OPV0", "OPV1", "OPV2", "OPV3", "PENTA1", "PENTA2", "PENTA3", "IPV1", "IPV2", "MCV1", "MCV2", "YF", "MAL1", "MAL2", "MAL3", "MAL4")
-  assumed: !r list(coverage = 0.60, per_cluster = 7, icc = 0.333, cv_weights = 0.5)
-  suppress_n: 25
-  fig_dir: "figures"
-  font: "Century Gothic"
-  simulated: FALSE
 output:
   word_document:
     reference_docx: !expr system.file("templates", "vcs_reference.docx", package = "vaxsurvR")
@@ -35,6 +10,51 @@ output:
     toc_depth: 2
     fig_caption: false
     keep_md: false
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    df_print: paged
+params:
+  data_file: ""
+  study_area: "Kongo Central Province"
+  country: "Democratic Republic of the Congo"
+  survey_year: 2026
+  partners:
+    value:
+      Survey partner: "University of Kinshasa (UNIKIN)"
+      Principal investigator: "Professor Trésor Zola Matuvanga"
+      Technical partner: "Biostat Global Consulting (BGC)"
+      Funding and oversight: "GiveWell"
+      Data source: "Data export from SurveyCTO"
+  n_caregivers: 3
+  n_children: 2
+  n_roster: 2
+  child_unit: "interview"
+  weight_var: ~
+  stratum_var: ~
+  frame_file: ~
+  psu_frame_file: ~
+  psu_backup_file: ~
+  boundary_file: ~
+  boundary_name_col: ~
+  boundary_dissolve_level: ~
+  map_levels: [adm1, adm2, zone]
+  program_zones: ~
+  targets_file: ~
+  evidence: "card_or_recall"
+  fully_vaccinated_doses: [BCG, OPV1, OPV2, OPV3, PENTA1, PENTA2, PENTA3, PCV1, PCV2, PCV3, MCV1, YF]
+  mosv_doses: [BCG, OPV0, OPV1, OPV2, OPV3, PENTA1, PENTA2, PENTA3, IPV1, IPV2, MCV1, MCV2, YF, MAL1, MAL2, MAL3, MAL4]
+  assumed:
+    value:
+      coverage: 0.60
+      per_cluster: 7
+      icc: 0.333
+      cv_weights: 0.5
+  suppress_n: 25
+  fig_dir: "figures"
+  font: "Arial"
+  simulated: FALSE
 ---
 
 ```{r setup, include = FALSE}
@@ -76,7 +96,10 @@ show_plot <- function(p, name, width = NULL, height = NULL) {
   height <- height %||% sz[["height"]]
   path <- file.path(params$fig_dir, paste0(name, ".png"))
   save_vcs_plot(p, path, width = width, height = height, dpi = 200)
-  cat(sprintf("\n\n![](%s){width=%.1fin}\n\n", path, min(width, 6.7)))
+  # Fit the page: at most the text width, and never taller than the space
+  # left under a caption, so that a caption and its figure stay together.
+  scale <- min(1, 6.7 / width, 7.6 / height)
+  cat(sprintf("\n\n![](%s){width=%.2fin}\n\n", path, width * scale))
 }
 show_fig <- function(p, name, width, height) show_plot(p, name, width = width, height = height)
 `%||%` <- function(a, b) if (is.null(a)) b else a
@@ -84,14 +107,23 @@ show_fig <- function(p, name, width, height) show_plot(p, name, width = width, h
 
 ```{r prepare, include = FALSE}
 stopifnot("`params$data_file` must point to the SurveyCTO wide export" = nzchar(params$data_file), file.exists(params$data_file))
+# `child_unit = "interview"` counts children with a completed child module
+# (the analysis unit for coverage); "roster" counts every child listed in the
+# household listing, interviewed or not, and adds an `interviewed` flag.
 vcs <- kc9_prepare(params$data_file,
                    n_caregivers = params$n_caregivers, n_children = params$n_children,
-                   n_roster = params$n_roster, weight = params$weight_var,
+                   n_roster = params$n_roster, unit = params$child_unit,
+                   weight = params$weight_var,
                    stratum = params$stratum_var, program_zones = params$program_zones)
+roster_unit <- identical(params$child_unit, "roster")
+n_interviewed <- if (roster_unit) sum(vcs$children$interviewed) else nrow(vcs$children)
 raw_n <- vcs$meta$n_raw_rows
 sched <- vcs$schedule
 EPI <- kc9_epi_doses()
 LAB <- kc9_labels()
+FULLY <- unlist(params$fully_vaccinated_doses)
+MOSV_DOSES <- unlist(params$mosv_doses)
+ASSUMED <- as.list(params$assumed)
 
 # Optional design weights computed from a PSU frame (Annex F method).
 weighted <- !is.null(params$weight_var)
@@ -117,7 +149,7 @@ dq <- vcs$meta$date_quality
 vcs <- derive_besd(vcs, kc9_besd_map())
 vcs <- derive_vaccination_status(vcs, evidence = params$evidence)
 vcs <- derive_zero_dose(vcs, evidence = params$evidence)
-vcs <- derive_fully_vaccinated(vcs, vaccines = params$fully_vaccinated_doses,
+vcs <- derive_fully_vaccinated(vcs, vaccines = FULLY,
                                evidence = params$evidence, name = "fully_vaccinated")
 ch <- vcs_children(vcs)
 n_children <- nrow(ch)
@@ -144,8 +176,8 @@ fully <- estimate_full_coverage(des)
 drop_penta <- estimate_dropout(des, "PENTA1", "PENTA3")
 drop_mcv <- estimate_dropout(des, "MCV1", "MCV2")
 vctc_all <- estimate_vctc(vcs, design = des, vaccines = EPI, evidence = params$evidence,
-                          fully_vaccinated = params$fully_vaccinated_doses)
-mosv <- derive_mosv(vcs, vaccines = intersect(params$mosv_doses, EPI))
+                          fully_vaccinated = FULLY)
+mosv <- derive_mosv(vcs, vaccines = intersect(MOSV_DOSES, EPI))
 mv_all <- estimate_mosv_visits(mosv)
 mc_all <- estimate_mosv_children(mosv)
 besd_all <- estimate_besd(des, kc9_besd_map())
@@ -163,7 +195,7 @@ sim_note <- if (isTRUE(params$simulated)) " **This report was generated from sim
 
 ```{r partners}
 cat("\n\n")
-show_ft(ft_vcs(data.frame(Item = names(params$partners), Value = unname(params$partners)),
+show_ft(ft_vcs(data.frame(Item = names(params$partners), Value = unname(unlist(params$partners))),
                col_labels = c(Item = "", Value = "")))
 ```
 
@@ -210,7 +242,7 @@ This report presents the findings of the `r params$survey_year` vaccination cove
 
 The analysis dataset contains **`r fmtn(n_children)` children** from **`r fmtn(n_psu)` clusters** (an average of `r sprintf("%.1f", n_children / n_psu)` children per cluster) in `r length(zones)` health zones, drawn from `r fmtn(n_hh)` household visits of which `r fmtn(n_eligible_hh)` (`r pct(n_eligible_hh / n_hh)`) contained at least one eligible child.
 
-**Coverage.** Penta1 coverage — the marker of access to routine immunization — was **`r pct(get_cov("PENTA1")$estimate)`** `r ci(get_cov("PENTA1")$conf_low, get_cov("PENTA1")$conf_high)`, so that an estimated **`r pct(zd$estimate)`** of children were zero-dose under the Gavi definition (no Penta1). Coverage declined across the Penta series from `r pct(get_cov("PENTA1")$estimate)` at Penta1 to `r pct(get_cov("PENTA2")$estimate)` at Penta2 and `r pct(get_cov("PENTA3")$estimate)` at Penta3: **`r pct(drop_penta$estimate)`** of children who began the series did not complete it. MCV1 coverage was `r pct(get_cov("MCV1")$estimate)` and **`r pct(fully$estimate)`** of children were fully vaccinated (`r paste(params$fully_vaccinated_doses, collapse = ", ")`).
+**Coverage.** Penta1 coverage — the marker of access to routine immunization — was **`r pct(get_cov("PENTA1")$estimate)`** `r ci(get_cov("PENTA1")$conf_low, get_cov("PENTA1")$conf_high)`, so that an estimated **`r pct(zd$estimate)`** of children were zero-dose under the Gavi definition (no Penta1). Coverage declined across the Penta series from `r pct(get_cov("PENTA1")$estimate)` at Penta1 to `r pct(get_cov("PENTA2")$estimate)` at Penta2 and `r pct(get_cov("PENTA3")$estimate)` at Penta3: **`r pct(drop_penta$estimate)`** of children who began the series did not complete it. MCV1 coverage was `r pct(get_cov("MCV1")$estimate)` and **`r pct(fully$estimate)`** of children were fully vaccinated (`r paste(FULLY, collapse = ", ")`).
 
 **Timeliness.** Vaccination cards were seen for **`r pct(card$estimate)`** of children, so the timing evidence rests on that subset. `r {tm <- vctc_all$timing; late <- tm[tm$vaccine == "PENTA3" & tm$category == "2+ months late", "share"][[1]]; sprintf("Among all children, %s received Penta3 two or more months late", pct(late))}`; the cumulative coverage curves show doses continuing to be given long after the scheduled age.
 
@@ -284,7 +316,120 @@ if (!is.null(targets)) tab$pct_respondents <- 100 * tab$pct_respondents
 show_ft(ft_vcs(tab, col_labels = cols))
 ```
 
-The analysis dataset holds `r fmtn(n_children)` children in `r fmtn(n_psu)` clusters across `r length(zones)` health zones. Fieldwork disposition, PSU replacement and protocol fidelity are documented in the progress reports and are not repeated here.
+The analysis dataset holds `r fmtn(n_children)` children in `r fmtn(n_psu)` clusters across `r length(zones)` health zones.`r if (roster_unit) sprintf(" Every child listed in the household listing is counted here, whether or not a vaccination interview took place: %s of them (%s) were interviewed and %s were listed but never interviewed, so they appear in denominators of eligibility and response but carry no vaccination evidence.", fmtn(n_interviewed), pct(n_interviewed / n_children), fmtn(n_children - n_interviewed)) else " Each row is a child with a completed vaccination module; children listed in the household listing but never interviewed are not counted."` Fieldwork disposition, PSU replacement and protocol fidelity are documented in the progress reports and are not repeated here.
+
+## Where data were collected
+
+```{r collection-setup, include = FALSE}
+# The sampling frame, not the dataset, is the denominator for progress: a
+# cluster that was never opened leaves no trace in the data and can only come
+# from the frame. The whole section is skipped when no frame is supplied.
+psu_frame <- NULL
+pm <- NULL
+if (!is.null(params$psu_frame_file) && file.exists(params$psu_frame_file)) {
+  psu_frame <- tryCatch(read_psu_frame(
+    primary = params$psu_frame_file,
+    backup = if (!is.null(params$psu_backup_file) &&
+                 file.exists(params$psu_backup_file)) params$psu_backup_file else NULL
+  ), error = function(e) NULL)
+}
+if (!is.null(psu_frame)) {
+  pm <- tryCatch(psu_map_data(vcs, psu_frame, n_caregivers = params$n_caregivers,
+                              n_children = params$n_children),
+                 error = function(e) NULL)
+}
+have_frame <- !is.null(pm)
+
+map_levels <- if (have_frame) {
+  lv <- intersect(unlist(params$map_levels), names(pm))
+  lv[vapply(lv, function(l) any(!is.na(pm[[l]])), logical(1))]
+} else {
+  character(0)
+}
+
+# Boundaries: a real layer when one is supplied, otherwise the convex hull of
+# the frame in each zone -- legible, but the frame's extent and not a border.
+boundaries <- NULL
+boundary_kind <- "none"
+if (have_frame) {
+  if (!is.null(params$boundary_file) && file.exists(params$boundary_file)) {
+    if (is.null(params$boundary_dissolve_level)) {
+      # A ready-made boundary layer: one polygon per unit already.
+      boundaries <- tryCatch(
+        read_admin_boundaries(params$boundary_file, name_col = params$boundary_name_col,
+                              names_wanted = unique(pm$zone)),
+        error = function(e) NULL)
+      if (!is.null(boundaries)) boundary_kind <- "file"
+    } else {
+      # A sampling-unit or segment layer: collapse it to one shape per unit
+      # first, or every segment becomes its own "zone" on the map.
+      boundaries <- tryCatch(
+        suppressWarnings(dissolve_frame_boundaries(
+          params$boundary_file, level = params$boundary_dissolve_level,
+          method = "hull")),
+        error = function(e) NULL)
+      if (!is.null(boundaries)) boundary_kind <- "hull"
+    }
+  }
+}
+az <- if (have_frame) admin_map_data(pm, "zone") else NULL
+```
+
+`r if (!have_frame) "No sampling frame was supplied, so progress against the frame is not shown here. Pass 'psu_frame_file' (and 'psu_backup_file') to add the coverage-of-frame table and the maps in this section." else ""`
+
+```{r collection-funnel, eval = have_frame}
+cap_tab("Sampling units in the frame and units opened, by administrative level")
+lvl_tab <- do.call(rbind, lapply(c("overall", map_levels), function(l) {
+  a <- admin_map_data(pm, l)
+  data.frame(
+    Level = l, Units = nrow(a),
+    `In frame` = sum(a$psus_frame), Opened = sum(a$psus_opened),
+    `% opened` = 100 * sum(a$psus_opened) / max(sum(a$psus_frame), 1),
+    `With children` = sum(a$psus_with_children),
+    `No eligible child` = sum(a$psus_zero_children),
+    Children = sum(a$children), check.names = FALSE)
+}))
+show_ft(ft_vcs(lvl_tab))
+```
+
+```{r collection-zone-table, eval = have_frame}
+cap_tab("Sampling units opened and children interviewed, by health zone")
+zt <- as.data.frame(az[order(-az$children),
+                       c("name", "psus_frame", "psus_opened", "pct_psus_opened",
+                         "psus_zero_children", "children")])
+zt$pct_psus_opened <- 100 * zt$pct_psus_opened
+show_ft(ft_vcs(zt, col_labels = c(
+  name = "Health zone", psus_frame = "In frame", psus_opened = "Opened",
+  pct_psus_opened = "% opened", psus_zero_children = "No eligible child",
+  children = "Children")))
+```
+
+```{r collection-map-progress, eval = have_frame && !is.null(boundaries)}
+cap_fig("Proportion of sampling units opened, by health zone")
+show_plot(plot_admin_map(az, boundaries, metric = "pct_psus_opened",
+                         title = NULL, subtitle = NULL),
+          "map_zone_progress", width = 6.7, height = 7.4)
+```
+
+```{r collection-map-hotspots, eval = have_frame && !is.null(boundaries)}
+cap_fig("Children aged 12–23 months interviewed by health zone, with sampling units")
+show_plot(plot_admin_map(az, boundaries, metric = "children", points = pm,
+                         title = NULL, subtitle = NULL),
+          "map_zone_hotspots", width = 6.7, height = 7.4)
+```
+
+```{r collection-bars, eval = have_frame}
+cap_fig("Proportion of sampling units opened, by health zone")
+show_plot(plot_admin_progress_bars(az), "bars_zone_progress",
+          width = 6.2, height = 6.6)
+```
+
+```{r collection-psu-map, eval = have_frame}
+cap_fig("Sampling units that yielded children, yielded none, and replacement units activated")
+show_plot(plot_psu_map(pm), "map_psu_panels", width = 6.7, height = 2.8)
+```
+
+`r if (have_frame && boundary_kind == "hull") "The outlines are the convex hull of the sampling units in each health zone, not an administrative boundary: they show the extent of the frame inside the zone and overstate its area. Supply 'boundary_file' with a health-zone boundary layer for a cartographic map." else ""`
 
 ## Characteristics of households with children aged 12–23 months
 
@@ -349,7 +494,9 @@ zone_groups <- split(zones, cut(seq_along(zones), max(1, ceiling(length(zones) /
 for (g in seq_along(zone_groups)) {
   bz <- besd_by_stratum(des, kc9_besd_map(), by = "zone_label", levels = zone_groups[[g]])
   cap_tab(sprintf("Percent of caregivers who gave concerning responses to BeSD questions, by health zone (%s)", paste(zone_groups[[g]], collapse = ", ")))
-  show_plot(plot_besd_by_stratum(bz), sprintf("besd_by_zone_%d", g))
+  show_ft(ft_besd_by_stratum(bz))
+  save_vcs_plot(plot_besd_by_stratum(bz), file.path(params$fig_dir, sprintf("besd_by_zone_%d.png", g)),
+                width = bar_table_size(plot_besd_by_stratum(bz))[["width"]], height = bar_table_size(plot_besd_by_stratum(bz))[["height"]])
 }
 ```
 
@@ -418,7 +565,7 @@ Each row of a VCTC is a dose, ordered from the bottom up by the age at which it 
 
 ```{r vctc-all, fig.width = 9.6, fig.height = 7.2}
 cap_fig(sprintf("Vaccination coverage and timeliness for the entire study area (N = %s)", fmtn(vctc_all$n_children)))
-show_fig(plot_vctc(vctc_all, title = sprintf("Vaccination coverage & timeliness: %s %s", params$study_area, params$survey_year), base_size = 9), "vctc_overall", 9.6, 7.2)
+show_fig(plot_vctc(vctc_all, title = sprintf("Vaccination coverage & timeliness: %s %s", params$study_area, params$survey_year), base_size = 12), "vctc_overall", 8.6, 8)
 ```
 
 ```{r vctc-zones, fig.width = 9.6, fig.height = 7.2}
@@ -426,11 +573,11 @@ for (z in zones) {
   nz <- sum(ch$zone_label == z, na.rm = TRUE)
   if (nz < params$suppress_n) next
   v <- tryCatch(estimate_vctc(vcs, design = des, vaccines = EPI, evidence = params$evidence,
-                              fully_vaccinated = params$fully_vaccinated_doses,
+                              fully_vaccinated = FULLY,
                               subset = zone_label == z), error = function(e) NULL)
   if (is.null(v)) next
   cap_fig(sprintf("Vaccination coverage and timeliness for %s health zone (N = %s)", z, fmtn(v$n_children)))
-  show_fig(plot_vctc(v, title = sprintf("Vaccination coverage & timeliness: %s", z), base_size = 9), paste0("vctc_", gsub("[^A-Za-z0-9]+", "_", z)), 9.6, 7.2)
+  show_fig(plot_vctc(v, title = sprintf("Vaccination coverage & timeliness: %s", z), base_size = 12), paste0("vctc_", gsub("[^A-Za-z0-9]+", "_", z)), 8.6, 8)
 }
 ```
 
@@ -457,10 +604,16 @@ meas <- function(pairs) lapply(seq_along(pairs), function(i) bar_measure(
   label = sprintf("%s-\n%s\nDropout\n(%%)", pairs[[i]][1], pairs[[i]][2]), n_label = "Wtd\nN"))
 p1 <- list(c("OPV1", "OPV3"), c("PENTA1", "PENTA3"), c("PCV1", "PCV3"), c("ROTA1", "ROTA3"))
 p2 <- list(c("MAL1", "MAL3"), c("MAL1", "MAL4"), c("IPV1", "IPV2"), c("MCV1", "MCV2"))
+ft_meas <- function(pairs) lapply(seq_along(pairs), function(i) bar_measure(
+  paste0("d", i), paste0("n", i),
+  label = sprintf("%s-%s dropout (%%)", pairs[[i]][1], pairs[[i]][2]), n_label = "Wtd N"))
+d1 <- drop_table(p1); d2 <- drop_table(p2)
 cap_tab("Dropout for the OPV, Penta, PCV and Rota vaccine series")
-show_plot(plot_bar_table(drop_table(p1), meas(p1), suppress_n = params$suppress_n), "dropout_1")
+show_ft(ft_bar_table(d1, ft_meas(p1), suppress_n = params$suppress_n))
 cap_tab("Dropout for the malaria, IPV and MCV vaccine series")
-show_plot(plot_bar_table(drop_table(p2), meas(p2), suppress_n = params$suppress_n), "dropout_2")
+show_ft(ft_bar_table(d2, ft_meas(p2), suppress_n = params$suppress_n))
+invisible(save_vcs_plot(plot_bar_table(d1, meas(p1), suppress_n = params$suppress_n), file.path(params$fig_dir, "dropout_1.png"), width = 8, height = 6.5))
+invisible(save_vcs_plot(plot_bar_table(d2, meas(p2), suppress_n = params$suppress_n), file.path(params$fig_dir, "dropout_2.png"), width = 8, height = 6.5))
 ```
 
 ### Cumulative coverage curves
@@ -468,7 +621,7 @@ show_plot(plot_bar_table(drop_table(p2), meas(p2), suppress_n = params$suppress_
 ```{r ccc, fig.width = 10, fig.height = 6.5}
 cc <- compute_ccc(vcs, vaccines = EPI)
 cap_fig("Cumulative coverage curves by antigen and dose, according to dated card entries")
-show_fig(plot_ccc(cc, title = sprintf("%s %s", params$study_area, params$survey_year), subtitle = "Entire study area"), "ccc_all", 10, 6.5)
+show_fig(plot_ccc(cc, title = sprintf("%s %s", params$study_area, params$survey_year), subtitle = "Entire study area"), "ccc_all", 8, 5.8)
 ```
 
 Each curve is the weighted percent of all children known from a dated card entry to have received the dose by a given age. A curve that rises steeply at the scheduled age indicates timely vaccination; a slow rise long after the dashed line indicates doses given late, and the plateau is the card-dated coverage of the dose. Annex B shows one figure per antigen.
@@ -496,10 +649,15 @@ int_notes <- c("This measure is an unweighted summary of a proportion from the s
                "N is the number of dose-to-dose intervals for which respondents had vaccination dates; a child contributes one interval per consecutive pair with dates.",
                sprintf("Outcomes based on fewer than %d intervals are suppressed (*).", params$suppress_n),
                "Table cells are shaded in proportion to the outcome; an outcome of 100% would fill the cell with colour.")
+int_ft_meas <- function(antigens) unlist(lapply(seq_along(antigens), function(i) list(
+  bar_measure(paste0("s", i), paste0("n", i), label = sprintf("%s interval < 28 days (%%)", antigens[i]), n_label = "N"),
+  bar_measure(paste0("l", i), paste0("n", i), label = sprintf("%s interval > 56 days (%%)", antigens[i]), n_label = "N"))), recursive = FALSE)
 for (grp in list(c("OPV", "PENTA"), c("PCV", "ROTA"), c("MAL"))) {
+  it <- int_table(grp)
   cap_tab(sprintf("Percent of %s intradose intervals that were < 28 days or > 56 days", paste(grp, collapse = " & ")))
-  show_plot(plot_bar_table(int_table(grp), int_meas(grp), suppress_n = params$suppress_n, notes = int_notes),
-            paste0("intervals_", paste(grp, collapse = "_")))
+  show_ft(ft_bar_table(it, int_ft_meas(grp), suppress_n = params$suppress_n, notes = int_notes))
+  invisible(save_vcs_plot(plot_bar_table(it, int_meas(grp), suppress_n = params$suppress_n, notes = int_notes),
+                          file.path(params$fig_dir, paste0("intervals_", paste(grp, collapse = "_"), ".png")), width = 8, height = 6.5))
 }
 ```
 
@@ -512,7 +670,7 @@ for (z in zones) {
   nz <- sum(ch$zone_label == z, na.rm = TRUE)
   if (nz < params$suppress_n) next
   cap_fig(sprintf("Organ-pipe plot of Penta1 coverage in %s health zone", z))
-  show_fig(plot_organ_pipe(des, "PENTA1", subset = zone_label == z, title = sprintf("Penta1 - %s", z)), paste0("organ_pipe_PENTA1_", gsub("[^A-Za-z0-9]+", "_", z)), 9, 5)
+  show_fig(plot_organ_pipe(des, "PENTA1", subset = zone_label == z, title = sprintf("Penta1 - %s", z)), paste0("organ_pipe_PENTA1_", gsub("[^A-Za-z0-9]+", "_", z)), 7.5, 4.2)
 }
 ```
 
@@ -527,17 +685,21 @@ mosv_notes <- c("Table cells are shaded in proportion to the outcome; an outcome
                 sprintf("Outcomes based on fewer than %d visits are suppressed (*).", params$suppress_n))
 mosv_meas <- function(doses) lapply(doses, function(v) bar_measure(paste0("mosv_", v), paste0("n_", v),
   label = sprintf("Visits\nwith\nMOSV\nfor %s\n(%%)", v), n_label = "N"))
+mosv_ft_meas <- function(doses) lapply(doses, function(v) bar_measure(paste0("mosv_", v), paste0("n_", v),
+  label = sprintf("Visits with MOSV for %s (%%)", v), n_label = "N"))
 groups <- split(mosv$vaccines, cut(seq_along(mosv$vaccines), ceiling(length(mosv$vaccines) / 4), labels = FALSE))
 for (i in seq_along(groups)) {
   cap_tab(sprintf("Visits with MOSVs for %s", paste(groups[[i]], collapse = ", ")))
-  show_plot(plot_bar_table(mv, mosv_meas(groups[[i]]), suppress_n = params$suppress_n, notes = mosv_notes),
-            paste0("mosv_visits_", i))
+  show_ft(ft_bar_table(mv, mosv_ft_meas(groups[[i]]), suppress_n = params$suppress_n, notes = mosv_notes))
+  invisible(save_vcs_plot(plot_bar_table(mv, mosv_meas(groups[[i]]), suppress_n = params$suppress_n, notes = mosv_notes),
+                          file.path(params$fig_dir, paste0("mosv_visits_", i, ".png")), width = 8, height = 6.5))
 }
 cap_tab("Visits with MOSVs for any dose and average number of MOSVs per vaccination visit")
-show_plot(plot_bar_table(mv, list(
-  bar_measure("mosv_any", "n_visits", label = "Visits\nwith\nMOSV\nfor any\ndose (%)", n_label = "N"),
-  bar_measure("mosv_per_visit", "n_visits", label = "MOSVs\nper\nvisit", n_label = "N", scale = 1, digits = 2, bar = FALSE)),
-  suppress_n = params$suppress_n, notes = c(mosv_notes, "The final measure, MOSVs per visit, is not a percent; it is a ratio.")), "mosv_visits_any")
+show_ft(ft_bar_table(mv, list(
+  bar_measure("mosv_any", "n_visits", label = "Visits with MOSV for any dose (%)", n_label = "N"),
+  bar_measure("mosv_per_visit", "n_visits", label = "MOSVs per visit", n_label = "N", scale = 1, digits = 2, bar = FALSE)),
+  suppress_n = params$suppress_n, notes = c(mosv_notes, "The final measure, MOSVs per visit, is not a percent; it is a ratio."),
+  label_width = 2.2))
 ```
 
 `r if (nrow(mv_all)) sprintf("Overall there was at least one MOSV in %s of documented vaccination visits and an average of %.2f MOSVs per visit.", pct(mv_all$mosv_any), mv_all$mosv_per_visit)`
@@ -547,20 +709,53 @@ show_plot(plot_bar_table(mv, list(
 The figures below summarise, for children with dated doses on a card and at least one documented visit at which they were eligible for the dose, the proportion vaccinated at the first eligible opportunity (blue), with a MOSV later corrected (gold) and with an uncorrected MOSV (red). The four columns at the right give the percent of children with no MOSVs (NM), all MOSVs corrected (AC), some corrected (SC) and none corrected (NC).
 
 ```{r mosv-children}
-halves <- split(mosv$vaccines, cut(seq_along(mosv$vaccines), 2, labels = FALSE))
-for (h in seq_along(halves)) {
-  cap_fig(sprintf("Children with MOSVs by health zone and dose (%s)", paste(range(halves[[h]]), collapse = " to ")))
-  show_plot(plot_mosv_children(mosv, by = "zone_label", vaccines = halves[[h]], suppress_n = params$suppress_n), sprintf("mosv_children_zone_%d", h))
-  cap_fig(sprintf("Children with MOSVs by health zone and dose, with sample sizes (%s)", paste(range(halves[[h]]), collapse = " to ")))
-  show_plot(plot_mosv_children(mosv, by = "zone_label", vaccines = halves[[h]], suppress_n = params$suppress_n, show_n = TRUE), sprintf("mosv_children_zone_n_%d", h))
+# Large surveys have many zones: figures are split into blocks of at most
+# `zones_per_fig` zones by `doses_per_fig` doses so every panel stays legible.
+zones_per_fig <- 8; doses_per_fig <- 6
+dose_groups <- split(mosv$vaccines, cut(seq_along(mosv$vaccines), ceiling(length(mosv$vaccines) / doses_per_fig), labels = FALSE))
+zone_blocks <- split(zones, cut(seq_along(zones), max(1, ceiling(length(zones) / zones_per_fig)), labels = FALSE))
+lab_range <- function(v) paste(v[c(1, length(v))], collapse = " to ")
+for (h in seq_along(dose_groups)) {
+  cap_fig(sprintf("Children with MOSVs, entire study area, with sample sizes (%s)", lab_range(dose_groups[[h]])))
+  show_plot(plot_mosv_children(mosv, vaccines = dose_groups[[h]], suppress_n = params$suppress_n, show_n = TRUE, base_size = 12),
+            sprintf("mosv_children_all_%d", h))
 }
-cap_fig("Children with MOSVs, entire study area")
-show_plot(plot_mosv_children(mosv, suppress_n = params$suppress_n, show_n = TRUE), "mosv_children_all")
-for (h in seq_along(halves)) {
-  cap_fig(sprintf("Time to MOSV correction: days between the first MOSV and receipt of the dose, entire study area (%s)", paste(range(halves[[h]]), collapse = " to ")))
-  show_plot(plot_mosv_correction(mosv, vaccines = halves[[h]], suppress_n = params$suppress_n), sprintf("mosv_correction_all_%d", h))
-  cap_fig(sprintf("Time to MOSV correction by health zone (%s)", paste(range(halves[[h]]), collapse = " to ")))
-  show_plot(plot_mosv_correction(mosv, by = "zone_label", vaccines = halves[[h]], suppress_n = params$suppress_n), sprintf("mosv_correction_zone_%d", h))
+for (zb in seq_along(zone_blocks)) {
+  for (h in seq_along(dose_groups)) {
+    cap_fig(sprintf("Children with MOSVs by health zone and dose, with sample sizes (%s; %s)",
+                    lab_range(zone_blocks[[zb]]), lab_range(dose_groups[[h]])))
+    show_plot(plot_mosv_children(mosv, by = "zone_label", vaccines = dose_groups[[h]], strata_levels = zone_blocks[[zb]],
+                                 suppress_n = params$suppress_n, show_n = TRUE, base_size = 12),
+              sprintf("mosv_children_zone_%d_%d", zb, h))
+  }
+}
+for (h in seq_along(dose_groups)) {
+  cap_fig(sprintf("Time to MOSV correction: days between the first MOSV and receipt of the dose, entire study area (%s)", lab_range(dose_groups[[h]])))
+  show_plot(plot_mosv_correction(mosv, vaccines = dose_groups[[h]], suppress_n = params$suppress_n, base_size = 11),
+            sprintf("mosv_correction_all_%d", h))
+}
+for (zb in seq_along(zone_blocks)) {
+  for (h in seq_along(dose_groups)) {
+    cap_fig(sprintf("Time to MOSV correction by health zone (%s; %s)", lab_range(zone_blocks[[zb]]), lab_range(dose_groups[[h]])))
+    show_plot(plot_mosv_correction(mosv, by = "zone_label", vaccines = dose_groups[[h]], strata_levels = zone_blocks[[zb]],
+                                   suppress_n = params$suppress_n, base_size = 11),
+              sprintf("mosv_correction_zone_%d_%d", zb, h))
+  }
+}
+# Medians as a table: days from first MOSV to correction, by zone and dose.
+tt <- mosv_time_to_correction(mosv, by = "zone_label")
+if (nrow(tt)) {
+  med <- dplyr::summarise(dplyr::group_by(tt, .data$zone_label, .data$vaccine),
+                          n = dplyr::n(), median = stats::median(.data$days_to_correction), .groups = "drop")
+  med$cell <- ifelse(med$n < params$suppress_n, "(*)", sprintf("%d (%d)", round(med$median), med$n))
+  wide <- stats::reshape(as.data.frame(med[, c("zone_label", "vaccine", "cell")]), idvar = "zone_label",
+                         timevar = "vaccine", direction = "wide")
+  names(wide) <- sub("^cell\\.", "", names(wide))
+  wide <- wide[, c("zone_label", intersect(mosv$vaccines, names(wide)))]
+  names(wide)[1] <- "Health zone"
+  wide[is.na(wide)] <- ""
+  cap_tab(sprintf("Median days from first MOSV to correction (number of corrected MOSVs), by health zone and dose; cells with fewer than %d corrections are suppressed (*)", params$suppress_n))
+  show_ft(ft_vcs(wide, font_size = 7.5))
 }
 ```
 
@@ -570,14 +765,16 @@ for (h in seq_along(halves)) {
 for (g in seq_along(zone_groups)) {
   rs <- reasons_by_stratum(des, "CVH35", LAB$cvh35, LAB$cvh35_category, by = "zone_label", levels = zone_groups[[g]])
   cap_tab(sprintf("Reasons the child is not fully vaccinated, among caregivers of children not fully vaccinated (all combined N = %s; %s)", fmtn(rs$n[1]), paste(zone_groups[[g]], collapse = ", ")))
-  show_plot(plot_reasons_table(rs), sprintf("reasons_not_vaccinated_%d", g))
+  show_ft(ft_reasons_table(rs))
+  invisible(save_vcs_plot(plot_reasons_table(rs), file.path(params$fig_dir, sprintf("reasons_not_vaccinated_%d.png", g)),
+                          width = bar_table_size(plot_reasons_table(rs))[["width"]], height = bar_table_size(plot_reasons_table(rs))[["height"]]))
 }
 ```
 
 ### Observed values of sample-size planning parameters
 
 ```{r params}
-sp <- sample_size_parameters(des, "PENTA1", assumed = params$assumed)
+sp <- sample_size_parameters(des, "PENTA1", assumed = ASSUMED)
 cap_tab("Observed values of sample-size planning parameters")
 d <- data.frame(Parameter = sp$parameter,
                 `Value assumed in sample size calculations` = ifelse(is.na(sp$assumed), "—", ifelse(sp$parameter == "PENTA1 coverage", pct(sp$assumed), sprintf("%.3g", sp$assumed))),
@@ -615,7 +812,7 @@ show_ft(ft_bar_table(base, list(bar_measure("v", "nv", label = "Ever received vi
 
 ## Coverage outcomes
 
-Penta1 coverage of `r pct(get_cov("PENTA1")$estimate)` indicates the level of access to routine immunization, and the decline to `r pct(get_cov("PENTA3")$estimate)` at Penta3 (dropout `r pct(drop_penta$estimate)`) shows that retaining children through the schedule is the larger challenge. The effective sample size for Penta1 was `r fmtn(get_cov("PENTA1")$neff)` with a design effect of `r sprintf("%.1f", get_cov("PENTA1")$deff)` (assumed: `r sprintf("%.2f", params$assumed$icc)` ICC, `r params$assumed$per_cluster` children per cluster).
+Penta1 coverage of `r pct(get_cov("PENTA1")$estimate)` indicates the level of access to routine immunization, and the decline to `r pct(get_cov("PENTA3")$estimate)` at Penta3 (dropout `r pct(drop_penta$estimate)`) shows that retaining children through the schedule is the larger challenge. The effective sample size for Penta1 was `r fmtn(get_cov("PENTA1")$neff)` with a design effect of `r sprintf("%.1f", get_cov("PENTA1")$deff)` (assumed: `r sprintf("%.2f", ASSUMED$icc)` ICC, `r ASSUMED$per_cluster` children per cluster).
 
 Timeliness outcomes show many doses received well after the scheduled age, and the MOSV analysis shows that children who do attend are frequently not given every dose for which they are eligible. Caregiver responses on the behavioural and social drivers point to both demand- and supply-side barriers: `r pct(b("BESD11")$estimate)` were never contacted about their child being due, `r pct(b("BESD15")$estimate)` had been turned away, and `r pct(b("BESD02")$estimate)` did not want all scheduled doses.
 
@@ -635,7 +832,9 @@ The figures in this annex report estimated coverage of each dose by health zone,
 for (v in EPI) {
   t <- estimate_stratified(des, estimate_coverage, STRATA, vaccines = v)
   cap_fig(sprintf("Crude coverage of %s by stratum", v))
-  show_fig(plot_coverage_by_stratum(t, title = sprintf("Crude coverage of %s", v)), paste0("coverage_by_stratum_", v), 8.5, 7.5)
+  n_rows <- sum(t$row_type != "header")
+  show_fig(plot_coverage_by_stratum(t, title = sprintf("Crude coverage of %s", v), base_size = 12),
+           paste0("coverage_by_stratum_", v), 7.2, max(4.5, 1.6 + 0.24 * n_rows))
 }
 ```
 
@@ -644,7 +843,7 @@ for (v in EPI) {
 ```{r annex-b, fig.width = 8, fig.height = 5}
 for (a in unique(sched$antigen[sched$vaccine %in% EPI])) {
   cap_fig(sprintf("Cumulative coverage curve: %s", a))
-  show_fig(plot_ccc(cc, antigens = a, title = sprintf("%s %s", params$study_area, params$survey_year), subtitle = a), paste0("ccc_", a), 8, 5)
+  show_fig(plot_ccc(cc, antigens = a, title = sprintf("%s %s", params$study_area, params$survey_year), subtitle = a), paste0("ccc_", a), 7.5, 4.8)
 }
 ```
 
@@ -655,7 +854,7 @@ cic <- compute_cic(vcs)
 for (to in unique(cic$to)) {
   if (!to %in% EPI) next
   cap_fig(sprintf("Cumulative interval curve: %s", unique(cic$pair[cic$to == to])))
-  show_fig(plot_cic(cic, to, subtitle = sprintf("%s %s", params$study_area, params$survey_year)), paste0("cic_", to), 8, 5)
+  show_fig(plot_cic(cic, to, subtitle = sprintf("%s %s", params$study_area, params$survey_year)), paste0("cic_", to), 7.5, 4.8)
 }
 ```
 
@@ -664,7 +863,7 @@ for (to in unique(cic$to)) {
 ```{r annex-d, fig.width = 9, fig.height = 7.5}
 ev <- estimate_coverage_by_evidence(vcs, vaccines = EPI, design_args = list(ids = ~psu, lonely_psu = "adjust", weights = if (weighted) ~weight else NULL))
 cap_fig("Coverage by antigen: card-documented, caregiver recall, and either source")
-show_fig(plot_coverage_evidence(ev), "coverage_by_evidence", 9, 7.5)
+show_fig(plot_coverage_evidence(ev), "coverage_by_evidence", 7.5, 6.5)
 cap_tab("Coverage by antigen and source of evidence (percent, 95% CI)")
 w <- ev[, c("indicator", "evidence", "estimate", "conf_low", "conf_high")]
 w$cell <- sprintf("%.1f (%.1f–%.1f)", 100 * w$estimate, 100 * w$conf_low, 100 * w$conf_high)

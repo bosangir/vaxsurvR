@@ -318,6 +318,8 @@ mosv_time_to_correction <- function(x, by = NULL, vaccines = NULL) {
 #' @param palette A [vcs_palette()]; `palette$mosv` gives the three colours.
 #' @param stratum_labels Optional named vector relabelling strata.
 #' @param base_size Font size.
+#' @param strata_levels Optional subset (and order) of the strata to draw, so
+#'   that a survey with many strata can be split over several figures.
 #' @return A ggplot.
 #' @export
 #' @examples
@@ -326,7 +328,8 @@ mosv_time_to_correction <- function(x, by = NULL, vaccines = NULL) {
 #' }
 plot_mosv_children <- function(x, by = NULL, vaccines = NULL, suppress_n = 25,
                                show_n = FALSE, palette = vcs_palette(),
-                               stratum_labels = NULL, base_size = 9) {
+                               stratum_labels = NULL, base_size = 9,
+                               strata_levels = NULL) {
   assert_installed("ggplot2", "plot_mosv_children()")
   if (is_vcs_data(x)) x <- derive_mosv(x, vaccines = vaccines)
   assert_mosv(x)
@@ -343,6 +346,12 @@ plot_mosv_children <- function(x, by = NULL, vaccines = NULL, suppress_n = 25,
   }
   strata <- unique(bd$domain)
   if (!length(by)) strata <- "<overall>"
+  if (!is.null(strata_levels)) {
+    strata <- intersect(as.character(strata_levels), strata)
+    bd <- bd[bd$domain %in% strata, , drop = FALSE]
+    sm <- sm[sm$domain %in% strata, , drop = FALSE]
+    if (!nrow(bd)) vcs_abort("`strata_levels` matches no stratum.", class = "vaxsurvR_value_error")
+  }
   lab <- if (is.null(stratum_labels)) stats::setNames(strata, strata) else stratum_labels
   lab[strata == "<overall>"] <- "Entire study area"
   bd$row <- match(bd$domain, strata)
@@ -380,10 +389,12 @@ plot_mosv_children <- function(x, by = NULL, vaccines = NULL, suppress_n = 25,
     ggplot2::annotate("text", x = -8, y = -(seq_len(n_row) - 1) * 1.6, label = lab[strata],
                       hjust = 1, size = txt, family = fam)
   # axis ticks 0 and 100 under each block
-  p <- p + ggplot2::annotate("text", x = c((seq_len(n_col) - 1) * (block_w + gap),
-                                           (seq_len(n_col) - 1) * (block_w + gap) + block_w),
-                             y = -(n_row - 1) * 1.6 - 0.85, label = rep(c("0", "100"), each = n_col),
-                             size = txt * 0.85, family = fam, colour = palette$grey_dk)
+  p <- p + ggplot2::annotate("text", x = (seq_len(n_col) - 1) * (block_w + gap),
+                             y = -(n_row - 1) * 1.6 - 0.85, label = "0", hjust = 0,
+                             size = txt * 0.85, family = fam, colour = palette$grey_dk) +
+    ggplot2::annotate("text", x = (seq_len(n_col) - 1) * (block_w + gap) + block_w,
+                      y = -(n_row - 1) * 1.6 - 0.85, label = "100", hjust = 1,
+                      size = txt * 0.85, family = fam, colour = palette$grey_dk)
   if (show_n) {
     nn <- unique(bd[, c("row", "col", "n")])
     p <- p + ggplot2::geom_label(data = nn,
@@ -394,25 +405,28 @@ plot_mosv_children <- function(x, by = NULL, vaccines = NULL, suppress_n = 25,
   }
   # summary columns at the right
   sm$row <- match(sm$domain, strata)
-  sx <- n_col * (block_w + gap) + c(15, 65, 115, 165)
-  for (i in seq_along(c("NM", "AC", "SC", "NC"))) {
+  # Summary columns spaced in proportion to the font size.
+  step <- 50 * base_size / 9
+  sx <- n_col * (block_w + gap) + step * c(0.4, 1.4, 2.4, 3.4)
+  summ <- dplyr::bind_rows(lapply(seq_along(c("NM", "AC", "SC", "NC")), function(i) {
     nm <- c("NM", "AC", "SC", "NC")[i]
-    p <- p + ggplot2::annotate("text", x = sx[i], y = 0.95, label = nm, size = txt,
-                               family = fam, fontface = "bold") +
-      ggplot2::geom_text(data = sm, ggplot2::aes(x = sx[i], y = -(.data$row - 1) * 1.6,
-                                                 label = sprintf("%.1f", 100 * .data[[nm]])),
-                         size = txt, family = fam)
-  }
+    tibble::tibble(x = sx[i], y = -(sm$row - 1) * 1.6, label = sprintf("%.1f", 100 * sm[[nm]]))
+  }))
+  p <- p + ggplot2::annotate("text", x = sx, y = 0.95, label = c("NM", "AC", "SC", "NC"),
+                             size = txt, family = fam, fontface = "bold") +
+    ggplot2::geom_text(data = summ, ggplot2::aes(x = .data$x, y = .data$y, label = .data$label),
+                       size = txt, family = fam)
   p <- p +
-    ggplot2::coord_cartesian(xlim = c(-60, n_col * (block_w + gap) + 190),
+    ggplot2::coord_cartesian(xlim = c(-(12 + 7 * max(nchar(lab[strata]))) * base_size / 9,
+                                      n_col * (block_w + gap) + step * 3.9),
                              ylim = c(-(n_row - 1) * 1.6 - 1.2, 1.4), clip = "off") +
-    ggplot2::labs(caption = sprintf(
-      paste0("Crude measures of MOSV shown; only children with dated doses on a home-based record and at least one documented visit when eligible for the dose are included.\n",
-             "Blocks with fewer than %d children are faded.%s\n",
-             "MOSV summary by stratum, %% of children with: NM = no MOSVs; AC = all MOSVs corrected; SC = some corrected; NC = none corrected. Percentages in each row sum to 100%%.\n",
+    ggplot2::labs(caption = paste(strwrap(sprintf(
+      paste0("Crude measures of MOSV shown; only children with dated doses on a home-based record and at least one documented visit when eligible for the dose are included. ",
+             "Blocks with fewer than %d children are faded.%s ",
+             "MOSV summary by stratum, %% of children with: NM = no MOSVs; AC = all MOSVs corrected; SC = some corrected; NC = none corrected. Percentages in each row sum to 100%%. ",
              "Doses assessed: %s."),
       suppress_n, if (show_n) " Sample size is shown on each bar." else "",
-      paste(vaccines, collapse = ", "))) +
+      paste(vaccines, collapse = ", ")), width = 22 + 14 * n_col), collapse = "\n")) +
     ggplot2::theme_void(base_size = base_size, base_family = fam) +
     ggplot2::theme(legend.position = "bottom",
                    plot.caption = ggplot2::element_text(hjust = 0, colour = palette$grey_dk,
@@ -420,7 +434,8 @@ plot_mosv_children <- function(x, by = NULL, vaccines = NULL, suppress_n = 25,
                    plot.caption.position = "plot",
                    plot.background = ggplot2::element_rect(fill = "white", colour = NA),
                    plot.margin = ggplot2::margin(6, 6, 6, 6))
-  attr(p, "vcs_size") <- c(width = 1.3 + n_col * 0.95 + 2.2, height = 0.9 + n_row * 0.55 + 1.1)
+  attr(p, "vcs_size") <- c(width = (1.3 + n_col * 0.82 + 2.0) * base_size / 11,
+                           height = (0.9 + n_row * 0.5 + 1.4) * base_size / 11)
   p
 }
 
@@ -448,12 +463,14 @@ tidyr_pivot <- function(bd) {
 #' @param max_days Upper limit of the x axis.
 #' @param palette A [vcs_palette()].
 #' @param base_size Font size.
+#' @param strata_levels Optional subset (and order) of the strata to draw.
 #' @return A ggplot.
 #' @export
 #' @examples
 #' if (requireNamespace("ggplot2", quietly = TRUE)) plot_mosv_correction(vcs_example)
 plot_mosv_correction <- function(x, by = NULL, vaccines = NULL, suppress_n = 25,
-                                 max_days = 150, palette = vcs_palette(), base_size = 8) {
+                                 max_days = 150, palette = vcs_palette(), base_size = 8,
+                                 strata_levels = NULL) {
   assert_installed("ggplot2", "plot_mosv_correction()")
   if (is_vcs_data(x)) x <- derive_mosv(x, vaccines = vaccines)
   assert_mosv(x)
@@ -464,6 +481,7 @@ plot_mosv_correction <- function(x, by = NULL, vaccines = NULL, suppress_n = 25,
   grid <- seq(0, max_days, by = 1)
   strata <- unique(tt$stratum)
   if (!length(strata)) strata <- "Entire study area"
+  if (!is.null(strata_levels)) strata <- as.character(strata_levels)
   curves <- dplyr::bind_rows(lapply(strata, function(s) {
     dplyr::bind_rows(lapply(vaccines, function(v) {
       d <- tt$days_to_correction[tt$stratum == s & tt$vaccine == v]
@@ -492,7 +510,7 @@ plot_mosv_correction <- function(x, by = NULL, vaccines = NULL, suppress_n = 25,
     ggplot2::scale_y_continuous(breaks = c(0, 100), labels = c("0%", "100%"), limits = c(0, 100)) +
     ggplot2::scale_x_continuous(breaks = c(0, 50, 100, 150), limits = c(0, max_days)) +
     ggplot2::labs(x = "Days between first MOSV and receiving dose", y = NULL,
-                  caption = sprintf("Red vertical lines and numerals indicate the median (50th percentile). Crude measures of MOSV shown; panels with fewer than %d corrected MOSVs are faded.", suppress_n)) +
+                  caption = paste(strwrap(sprintf("Red vertical lines and numerals indicate the median (50th percentile). Crude measures of MOSV shown; panels with fewer than %d corrected MOSVs are faded.", suppress_n), width = 20 + 14 * length(vaccines)), collapse = "\n")) +
     theme_vcs(base_size = base_size, palette = palette, grid = "y") +
     ggplot2::theme(strip.text.y = ggplot2::element_text(angle = 0, hjust = 0),
                    panel.spacing = grid::unit(0.5, "lines"),

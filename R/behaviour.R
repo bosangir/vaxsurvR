@@ -225,9 +225,13 @@ besd_by_stratum <- function(design, map, by, levels = NULL) {
 #' @param palette A [vcs_palette()]; `palette$besd` colours the row groups.
 #' @param base_size Font size.
 #' @param title Optional title.
+#' @param n_label How the sample size is labelled in each column header. The
+#'   default `"N"` is correct for an unweighted analysis; pass `"Wtd N"` when
+#'   the design carries survey weights.
 #' @return A ggplot.
 #' @export
-plot_besd_by_stratum <- function(x, palette = vcs_palette(), base_size = 8.5, title = NULL) {
+plot_besd_by_stratum <- function(x, palette = vcs_palette(), base_size = 8.5, title = NULL,
+                                 n_label = "N") {
   assert_installed("ggplot2", "plot_besd_by_stratum()")
   tab <- x$table
   q <- rownames(tab)
@@ -264,7 +268,7 @@ plot_besd_by_stratum <- function(x, palette = vcs_palette(), base_size = 8.5, ti
     ggplot2::annotate("text", x = 0.5, y = nq - seq_len(nq) + 1, label = x$short[q],
                       hjust = 0, size = ts, family = fam) +
     ggplot2::annotate("text", x = label_w + (seq_len(ns) - 1) * cell_w + cell_w / 2,
-                      y = nq + 1.2, label = sprintf("%s\n(Wtd N = %s)", strata, format(round(x$n), big.mark = ",")),
+                      y = nq + 1.2, label = sprintf("%s\n(%s = %s)", strata, n_label, format(round(x$n), big.mark = ",")),
                       size = ts, family = fam, lineheight = 0.9, fontface = "bold") +
     ggplot2::annotate("text", x = 0.5, y = nq + 1.2, label = "Question", hjust = 0,
                       size = ts, family = fam, fontface = "bold") +
@@ -522,4 +526,157 @@ estimate_yes_no <- function(design, variable, yes = "1", dk = c("98", "99"), by 
   out <- estimate_indicator(design, ".yn", by, type = "yes_no", ...)
   out$indicator <- variable
   out
+}
+
+#' Shade a flextable column block with per-cell mini bars
+#' @noRd
+ft_shade_cells <- function(ft, values, j, colours, digits = 1, bar_width = 0.35,
+                           text = NULL, font_size = 8) {
+  for (r in seq_along(values)) {
+    v <- values[r]
+    if (is.na(v)) next
+    col <- if (length(colours) == 1L) colours else colours[r]
+    lab <- if (is.null(text)) formatC(100 * v, format = "f", digits = digits) else text[r]
+    ft <- flextable::compose(
+      ft, i = r, j = j,
+      value = flextable::as_paragraph(
+        flextable::as_chunk(cell_bar_string(v), props = officer::fp_text(color = col, font.size = max(4, font_size - 2.5))),
+        " ", lab
+      )
+    )
+  }
+  ft
+}
+
+#' A proportional bar made of block characters
+#'
+#' Word does not keep the raster mini-bars flextable draws when a document is
+#' produced through pandoc, so cell shading is drawn with full-block
+#' characters in the bar colour: robust in Word, HTML and PDF.
+#' @noRd
+cell_bar_string <- function(v, max_blocks = 8L) {
+  v <- suppressWarnings(as.numeric(v))
+  if (is.na(v) || v <= 0) return("")
+  n <- max(1L, round(min(v, 1) * max_blocks))
+  strrep("\u2588", n)
+}
+
+#' Mix a colour toward white (Word cannot render alpha)
+#' @noRd
+lighten <- function(col, f) {
+  rgb <- grDevices::col2rgb(col)
+  grDevices::rgb(t(rgb + (255 - rgb) * f), maxColorValue = 255)
+}
+
+#' BeSD-by-stratum table as a flextable
+#'
+#' The Word/HTML counterpart of [plot_besd_by_stratum()]: rows are questions,
+#' columns are strata (sample size in the header), every cell a mini bar in
+#' the question group's colour plus the percent.
+#'
+#' @param x Output of [besd_by_stratum()].
+#' @param palette A [vcs_palette()]; `palette$besd` colours the groups.
+#' @param font_size Body font size in points.
+#' @param total_width Table width in inches.
+#' @param n_label How the sample size is labelled in each column header. The
+#'   default `"N"` is correct for an unweighted analysis; pass `"Wtd N"` when
+#'   the design carries survey weights.
+#' @return A `flextable`.
+#' @export
+ft_besd_by_stratum <- function(x, palette = vcs_palette(), font_size = 8, total_width = getOption("vaxsurvR.table_width", 6.7),
+                               n_label = "N") {
+  assert_installed(c("flextable", "officer"), "ft_besd_by_stratum()")
+  tab <- x$table
+  q <- rownames(tab)
+  strata <- colnames(tab)
+  df <- data.frame(question = unname(x$short[q]), stringsAsFactors = FALSE)
+  keys <- paste0("s", seq_along(strata))
+  for (i in seq_along(strata)) df[[keys[i]]] <- ""
+  ft <- flextable::flextable(df)
+  hdr <- stats::setNames(as.list(sprintf("%s\n(%s = %s)", strata, n_label, format(round(x$n), big.mark = ","))), keys)
+  hdr$question <- "Question"
+  ft <- flextable::set_header_labels(ft, values = hdr)
+  cols <- palette$besd[x$groups]
+  cols[is.na(cols)] <- palette$secondary
+  shade <- stats::ave(seq_along(q), x$groups, FUN = seq_along)
+  size_grp <- stats::ave(seq_along(q), x$groups, FUN = length)
+  fills <- vapply(seq_along(q), function(i) {
+    f <- if (size_grp[i] > 1) 0.15 + 0.7 * (shade[i] - 1) / (size_grp[i] - 1) else 0
+    lighten(cols[i], 0.65 * f)
+  }, character(1))
+  for (i in seq_along(strata)) ft <- ft_shade_cells(ft, as.numeric(tab[, i]), keys[i], fills, font_size = font_size - 1)
+  ft <- ft_theme_shaded(ft, palette, font_size, keys, label_col = "question",
+                        total_width = total_width, label_width = 2.9)
+  ft <- flextable::add_footer_lines(ft, values = "Table cells are shaded in proportion to the outcome; an outcome of 100% would fill the cell with colour. Percent of caregivers who gave a concerning response.")
+  ft <- flextable::fontsize(ft, size = font_size - 1, part = "footer")
+  ft <- flextable::color(ft, color = palette$grey_dk, part = "footer")
+  flextable::set_table_properties(ft, layout = "fixed", align = "left")
+}
+
+#' Reasons-not-vaccinated table as a flextable
+#'
+#' The Word/HTML counterpart of [plot_reasons_table()].
+#'
+#' @param x Output of [reasons_by_stratum()].
+#' @param palette A [vcs_palette()].
+#' @param font_size Body font size in points.
+#' @param total_width Table width in inches.
+#' @return A `flextable`.
+#' @export
+ft_reasons_table <- function(x, palette = vcs_palette(), font_size = 8, total_width = getOption("vaxsurvR.table_width", 6.7)) {
+  assert_installed(c("flextable", "officer"), "ft_reasons_table()")
+  tab <- x$table
+  cols <- colnames(tab)
+  keys <- paste0("c", seq_along(cols))
+  df <- data.frame(category = x$category, reason = rownames(tab), stringsAsFactors = FALSE)
+  for (k in keys) df[[k]] <- ""
+  df[nrow(df) + 1L, ] <- c("", "N", format(round(x$n), big.mark = ","))
+  ft <- flextable::flextable(df)
+  hdr <- stats::setNames(as.list(cols), keys)
+  hdr$category <- "Category"
+  hdr$reason <- "Reason"
+  ft <- flextable::set_header_labels(ft, values = hdr)
+  for (i in seq_along(cols)) {
+    ft <- ft_shade_cells(ft, c(as.numeric(tab[, i]), NA), keys[i], palette$bar_fill, font_size = font_size - 1)
+  }
+  ft <- ft_theme_shaded(ft, palette, font_size, keys, label_col = "reason",
+                        total_width = total_width, label_width = 2.3,
+                        extra_label = "category", extra_width = 0.9)
+  ft <- flextable::merge_v(ft, j = "category")
+  ft <- flextable::valign(ft, j = "category", valign = "center")
+  ft <- flextable::bold(ft, i = nrow(df), part = "body")
+  breaks <- which(diff(as.integer(factor(x$category, levels = unique(x$category)))) != 0)
+  if (length(breaks)) {
+    ft <- flextable::hline(ft, i = breaks, border = officer::fp_border(color = palette$grey_dk, width = 0.75))
+  }
+  ft <- flextable::add_footer_lines(ft, values = "Table cells are shaded in proportion to the outcome; an outcome of 100% would fill the cell with colour. Caregivers could give more than one reason.")
+  ft <- flextable::fontsize(ft, size = font_size - 1, part = "footer")
+  ft <- flextable::color(ft, color = palette$grey_dk, part = "footer")
+  flextable::set_table_properties(ft, layout = "fixed", align = "left")
+}
+
+#' Shared styling for shaded-cell flextables
+#' @noRd
+ft_theme_shaded <- function(ft, palette, font_size, keys, label_col, total_width = getOption("vaxsurvR.table_width", 6.7),
+                            label_width = 2.5, extra_label = NULL, extra_width = 0) {
+  fam <- getOption("vaxsurvR.font", "Arial")
+  ft <- flextable::font(ft, fontname = fam, part = "all")
+  ft <- flextable::fontsize(ft, size = font_size, part = "all")
+  ft <- flextable::bg(ft, bg = "#F2F2F2", part = "header")
+  ft <- flextable::bold(ft, part = "header")
+  ft <- flextable::align(ft, align = "center", part = "header")
+  ft <- flextable::align(ft, align = "right", j = keys, part = "body")
+  ft <- flextable::align(ft, align = "left", j = label_col, part = "all")
+  ft <- flextable::border_remove(ft)
+  ft <- flextable::border_inner_h(ft, border = officer::fp_border(color = palette$grey_lt, width = 0.5), part = "body")
+  ft <- flextable::border_inner_v(ft, border = officer::fp_border(color = palette$grey, width = 0.5), part = "all")
+  ft <- flextable::hline_bottom(ft, border = officer::fp_border(color = palette$grey_dk, width = 0.75), part = "header")
+  ft <- flextable::hline_bottom(ft, border = officer::fp_border(color = palette$grey_dk, width = 0.75), part = "body")
+  ft <- flextable::padding(ft, padding.top = 1, padding.bottom = 1, padding.left = 3, padding.right = 3, part = "all")
+  ft <- flextable::keep_with_next(ft, part = "all")
+  cell_w <- (total_width - label_width - extra_width) / length(keys)
+  ft <- flextable::width(ft, j = label_col, width = label_width)
+  if (!is.null(extra_label)) ft <- flextable::width(ft, j = extra_label, width = extra_width)
+  ft <- flextable::width(ft, j = keys, width = cell_w)
+  flextable::set_table_properties(ft, layout = "fixed", align = "left")
 }

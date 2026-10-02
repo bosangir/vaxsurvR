@@ -58,14 +58,19 @@ use_coverage_report <- function(path = "coverage_report.Rmd", overwrite = FALSE)
 #' @param data_file Path to the wide export (CSV/TSV/XLSX).
 #' @param output_file Name of the Word file.
 #' @param output_dir Folder for the report and its `figures/` sub-folder.
-#' @param params Named list overriding the template parameters: `title`,
-#'   `subtitle`, `study_area`, `country`, `survey_year`, `prepared_by`,
-#'   `partners`, `n_caregivers`, `n_children`, `n_roster`, `weight_var`,
+#' @param params Named list overriding the template parameters: `study_area`,
+#'   `country`, `survey_year`, `partners` (named list), `n_caregivers`,
+#'   `n_children`, `n_roster`, `weight_var`,
 #'   `stratum_var`, `frame_file`, `program_zones`, `targets_file`,
 #'   `evidence`, `fully_vaccinated_doses`, `mosv_doses`, `assumed`,
 #'   `suppress_n`, `font`, `simulated`. See the template's YAML header.
+#'   `title`, `subtitle` and `prepared_by` may also be given; they become the
+#'   document's title-page metadata.
 #' @param rmd Path to an edited copy of the template; defaults to the
 #'   installed one.
+#' @param reference_docx Word reference document carrying the styles;
+#'   defaults to the one installed with the package. Pass your own to change
+#'   fonts or colours without touching the template.
 #' @param quiet Passed to [rmarkdown::render()].
 #' @param update_fields Fill in the table of contents after rendering with
 #'   [update_docx_fields()] (Windows with Word only; silently skipped
@@ -82,7 +87,8 @@ use_coverage_report <- function(path = "coverage_report.Rmd", overwrite = FALSE)
 #' }
 render_coverage_report <- function(data_file, output_file = "coverage_report.docx",
                                    output_dir = ".", params = list(), rmd = NULL,
-                                   quiet = FALSE, update_fields = TRUE) {
+                                   reference_docx = NULL, quiet = FALSE,
+                                   update_fields = TRUE) {
   assert_installed(c("rmarkdown", "knitr", "flextable", "officer", "ggplot2"),
                    "render_coverage_report()")
   assert_string(data_file)
@@ -94,10 +100,26 @@ render_coverage_report <- function(data_file, output_file = "coverage_report.doc
   output_dir <- normalizePath(output_dir, winslash = "/")
   params$data_file <- normalizePath(data_file, winslash = "/")
   params$fig_dir <- params$fig_dir %||% "figures"
+  # Title, subtitle and author are document metadata, not knit parameters:
+  # they are handed to pandoc so the YAML header can stay plain text (RStudio
+  # rewrites the header when the output format is switched, and mangles
+  # inline R there).
+  meta <- c(title = params$title, subtitle = params$subtitle,
+            author = params$prepared_by %||% params$author)
+  params$title <- params$subtitle <- params$prepared_by <- params$author <- NULL
+  pandoc_args <- unlist(lapply(names(meta), function(k) {
+    if (is.null(meta[[k]])) NULL else c("--metadata", sprintf("%s=%s", k, meta[[k]]))
+  }))
+  reference_docx <- reference_docx %||% coverage_report_template()[["reference_docx"]]
+  fmt <- rmarkdown::word_document(
+    reference_docx = normalizePath(reference_docx, winslash = "/", mustWork = TRUE),
+    toc = TRUE, toc_depth = 2, fig_caption = FALSE,
+    pandoc_args = pandoc_args
+  )
   # Knit in the output folder so that figures land beside the report and
   # relative image links resolve for pandoc.
   rmarkdown::render(
-    rmd, output_file = output_file, output_dir = output_dir,
+    rmd, output_format = fmt, output_file = output_file, output_dir = output_dir,
     knit_root_dir = output_dir,
     intermediates_dir = output_dir,
     params = params, envir = new.env(parent = globalenv()), quiet = quiet

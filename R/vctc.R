@@ -477,7 +477,7 @@ plot_vctc <- function(x, title = "Vaccination coverage and timeliness",
                    legend.key.size = grid::unit(1, "lines"),
                    axis.line.y = ggplot2::element_line(colour = palette$grey_dk),
                    plot.margin = ggplot2::margin(6, 12, 6, 6)) +
-    ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
+    ggplot2::guides(fill = ggplot2::guide_legend(nrow = if (length(levels) > 5) 2 else 1, byrow = TRUE))
 
   if (show_ci) {
     p <- p + ggplot2::geom_errorbarh(
@@ -500,7 +500,7 @@ plot_vctc <- function(x, title = "Vaccination coverage and timeliness",
   }
   xmax <- 100
   if (show_stats) {
-    stat_x <- c(118, 136, 152, 165, 177, 189)
+    stat_x <- c(117, 137, 155, 169, 182, 195)
     hdr <- c("Coverage (%)", "95% CI", "N", "NEFF", "DEFF", "ICC")
     vals <- list(
       fmt1(cov$estimate),
@@ -518,7 +518,7 @@ plot_vctc <- function(x, title = "Vaccination coverage and timeliness",
                           size = base_size / ggplot2::.pt * 0.85, hjust = 0.5,
                           family = vcs_font(), colour = palette$ink)
     }
-    xmax <- 198
+    xmax <- 203
   }
   p <- p + ggplot2::coord_cartesian(xlim = c(0, xmax), clip = "off")
   if (footnote) {
@@ -532,6 +532,8 @@ plot_vctc <- function(x, title = "Vaccination coverage and timeliness",
       100 * x$not_vaccinated[["conf_high"]],
       if (!isTRUE(x$weighted)) "\nUnweighted: equal weights were used, so these describe the sample, not the population." else ""
     )
+    wrap_w <- 150 * 10 / base_size
+    cap <- paste(unlist(lapply(strsplit(cap, "\n")[[1]], strwrap, width = wrap_w)), collapse = "\n")
     p <- p + ggplot2::labs(caption = cap)
   }
   p

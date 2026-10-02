@@ -132,6 +132,10 @@ kc9_recall_map <- function() {
 #'   `PVT_GPS_latitude`.
 #' @param date_formats Date formats to try, most common first. Desktop exports
 #'   write `m/d/Y`.
+#' @param roster Map the child level onto the `rost_*` columns built by
+#'   [kc9_prepare()] with `unit = "roster"`, so that every child listed in the
+#'   household listing becomes a row. `n_children` is then the number of
+#'   roster slots and `n_caregivers` is 1.
 #' @return A [vcs_dictionary()].
 #' @export
 #' @family KC v9 configuration
@@ -140,7 +144,8 @@ kc9_recall_map <- function() {
 kc9_dictionary <- function(n_caregivers = 3L, n_children = 3L, psu = "PVT06",
                            health_zone = "PVT05", weight = NULL, stratum = NULL,
                            gps_suffix = c("-Latitude", "-Longitude", "-Accuracy"),
-                           date_formats = c("%m/%d/%Y", "%Y-%m-%d", "%d/%m/%Y")) {
+                           date_formats = c("%m/%d/%Y", "%Y-%m-%d", "%d/%m/%Y"),
+                           roster = FALSE) {
   args <- list(
     interview_id   = "KEY",
     household_id   = "KEY",
@@ -174,6 +179,25 @@ kc9_dictionary <- function(n_caregivers = 3L, n_children = 3L, psu = "PVT06",
     recall_ever    = "recall_ever_{antigen}_{c}_{k}",
     recall_count   = "recall_count_{antigen}_{c}_{k}"
   )
+  if (roster) {
+    # Roster mode: one row per child listed in the household listing, whether
+    # or not a child module was completed. `{k}` indexes the roster slot and
+    # `{c}` is unused, so `n_caregivers` is 1.
+    args$child_name     <- "rost_name_{k}"
+    args$caregiver_name <- NULL
+    args$caregiver_id   <- "rost_caregiver_{k}"
+    args$child_dob      <- "rost_dob_{k}"
+    args$sex            <- "rost_sex_{k}"
+    args$age_months     <- "rost_months_{k}"
+    args$card_seen      <- "rost_CVH_card_shown_{k}"
+    args$card_status    <- "rost_CVH{vv}_{k}"
+    args$card_date      <- "rost_CVH{vv}_date_{k}"
+    args$recall_status  <- "rost_recall_status_{vaccine}_{k}"
+    args$recall_ever    <- "rost_recall_ever_{antigen}_{k}"
+    args$recall_count   <- "rost_recall_count_{antigen}_{k}"
+    args <- args[!vapply(args, is.null, logical(1))]
+    n_caregivers <- 1L
+  }
   if (!is.null(weight)) args$weight <- weight
   if (!is.null(stratum)) args$stratum <- stratum
   do.call(vcs_dictionary, c(
@@ -427,10 +451,15 @@ kc9_caregiver_extras <- function() {
 #'   (or pass `raw`).
 #' @param variables Variable stems, e.g. `c("BESD01", "ORS01")`.
 #' @param raw The raw export, if `x$raw` was dropped.
+#' @param naming `"caregiver_child"` for the `<var>_{c}_{k}` columns of the
+#'   child module, or `"roster"` for the `rost_<var>_{k}` columns built in
+#'   roster mode.
 #' @return `x`, with the variables added to `x$children`.
 #' @export
 #' @family KC v9 configuration
-attach_child_variables <- function(x, variables, raw = NULL) {
+attach_child_variables <- function(x, variables, raw = NULL,
+                                   naming = c("caregiver_child", "roster")) {
+  naming <- match.arg(naming)
   assert_vcs_data(x)
   assert_character(variables, allow_null = FALSE)
   raw <- raw %||% x$raw
@@ -443,6 +472,20 @@ attach_child_variables <- function(x, variables, raw = NULL) {
   }
   id_col <- x$dictionary$map$interview_id %||% "KEY"
   row_of <- match(ch$interview_id, as.character(raw[[id_col]]))
+  if (naming == "roster") {
+    for (v in variables) {
+      out <- rep(NA_character_, nrow(ch))
+      for (k in unique(stats::na.omit(ch$child_index))) {
+        col <- sprintf("rost_%s_%d", v, k)
+        if (!col %in% names(raw)) next
+        sel <- !is.na(ch$child_index) & ch$child_index == k & !is.na(row_of)
+        out[sel] <- as.character(raw[[col]])[row_of[sel]]
+      }
+      ch[[v]] <- out
+    }
+    x$children <- ch
+    return(x)
+  }
   for (v in variables) {
     out <- rep(NA_character_, nrow(ch))
     for (c_i in unique(stats::na.omit(ch$caregiver_index))) {
@@ -474,6 +517,13 @@ attach_child_variables <- function(x, variables, raw = NULL) {
 #' @param program_zones Optional character vector of health zones that make
 #'   up the programme cohort; written to `children$cohort`.
 #' @param keep_raw Keep the raw export inside the result.
+#' @param unit What a row of the child table is. `"interview"` (default) keeps
+#'   one row per completed child module -- the analysis unit for coverage.
+#'   `"roster"` keeps one row per child listed in the household listing
+#'   (`children` repeat group), whether or not the module was done, and adds
+#'   an `interviewed` flag; children never interviewed carry no vaccination
+#'   evidence, so they enlarge denominators of response and eligibility but
+#'   contribute nothing to card or recall coverage.
 #' @param ... Passed to [kc9_dictionary()].
 #' @return A [vcs_data][new_vcs_data] object.
 #' @export
@@ -484,7 +534,8 @@ attach_child_variables <- function(x, variables, raw = NULL) {
 #' }
 kc9_prepare <- function(data, n_caregivers = 3L, n_children = 3L, n_roster = 4L,
                         weight = NULL, stratum = NULL, program_zones = NULL,
-                        keep_raw = TRUE, ...) {
+                        keep_raw = TRUE, unit = c("interview", "roster"), ...) {
+  unit <- match.arg(unit)
   raw <- if (is.character(data)) read_surveycto(data) else {
     assert_data(data)
     data
@@ -498,10 +549,31 @@ kc9_prepare <- function(data, n_caregivers = 3L, n_children = 3L, n_roster = 4L,
   raw <- apply_recall_map(raw, kc9_recall_map(), sched,
                           n_caregivers = n_caregivers, n_children = n_children)
   raw <- kc9_caregiver_to_child(raw, kc9_caregiver_extras(), n_caregivers, n_children)
-  dict <- kc9_dictionary(n_caregivers = n_caregivers, n_children = n_children,
-                         weight = weight, stratum = stratum, ...)
+  extras <- c(kc9_child_extras(), kc9_caregiver_extras())
+  if (unit == "roster") {
+    raw <- kc9_roster_frame(raw, sched, n_caregivers, n_children, n_roster,
+                            extras = setdiff(extras, c("caregiver_education", "caregiver_marital", "caregiver_sex")))
+    dict <- kc9_dictionary(n_caregivers = 1L, n_children = n_roster,
+                           weight = weight, stratum = stratum, roster = TRUE, ...)
+  } else {
+    dict <- kc9_dictionary(n_caregivers = n_caregivers, n_children = n_children,
+                           weight = weight, stratum = stratum, ...)
+  }
   vcs <- suppressWarnings(map_vcs_variables(raw, dict, sched, keep_raw = TRUE))
-  vcs <- attach_child_variables(vcs, c(kc9_child_extras(), kc9_caregiver_extras()))
+  vcs <- attach_child_variables(vcs, extras,
+                                naming = if (unit == "roster") "roster" else "caregiver_child")
+  if (unit == "roster") {
+    vcs <- attach_child_variables(vcs, c("interviewed", "listed"), naming = "roster")
+    vcs$children$interviewed <- as.integer(vcs$children$interviewed %in% "1")
+    rf <- attr(raw, "roster_frame")
+    vcs$meta$roster_frame <- rf
+    if (!is.null(rf) && rf[["unmatched"]] > 0) {
+      vcs_warn(sprintf(paste0("%d child module(s) could not be matched to a line of the household ",
+                              "listing and carry no row in roster mode; %d of %d modules matched."),
+                       rf[["unmatched"]], rf[["matched"]], rf[["modules"]]),
+               class = "vaxsurvR_roster_unmatched")
+    }
+  }
   lab <- kc9_labels()
   # Residence and zone are household-level concepts; join them once so that
   # the child table is self-contained for stratified estimation.
@@ -539,4 +611,151 @@ kc9_strata <- function(zone_parent = NULL) {
                      levels = c("No formal schooling", "Primary", "Secondary or more")),
     overall_label = "Entire study area"
   )
+}
+
+#' Which roster child does each child module belong to?
+#'
+#' The child module is indexed by caregiver block `c` and child-within-caregiver
+#' `k`; the roster is indexed by household child slot `n`. This returns, for
+#' every module slot, the roster slot it belongs to, using the same rule as
+#' [kc9_link_roster()]: `EC04_{c}_{k}` (falling back to `CB03_{c}`) identifies
+#' the caregiver, and `k` picks the k-th roster child of that caregiver.
+#'
+#' @param df The raw export.
+#' @param n_caregivers,n_children,n_roster Repeat extents.
+#' @return A list of integer vectors, named `"c_k"`, each of length `nrow(df)`,
+#'   giving the roster index matched or `NA`.
+#' @noRd
+kc9_module_roster_index <- function(df, n_caregivers = 3L, n_children = 3L, n_roster = 4L) {
+  nz <- function(x) !is.na(x) & nzchar(trimws(x))
+  get <- function(cn) if (cn %in% names(df)) as.character(df[[cn]]) else rep(NA_character_, nrow(df))
+  cg <- lapply(seq_len(n_roster), function(n) get(sprintf("HL08_caregiver_id_%d", n)))
+  dob <- lapply(seq_len(n_roster), function(n) get(sprintf("HL05_child_dob_%d", n)))
+  nm <- lapply(seq_len(n_roster), function(n) get(sprintf("HL02_child_name_%d", n)))
+  listed <- lapply(seq_len(n_roster), function(n) nz(dob[[n]]) | nz(nm[[n]]))
+  n_listed <- Reduce(`+`, lapply(listed, as.integer))
+  first_listed <- Reduce(function(a, n) ifelse(is.na(a) & listed[[n]], n, a),
+                         seq_len(n_roster), init = rep(NA_integer_, nrow(df)))
+  out <- list()
+  taken <- matrix(FALSE, nrow(df), n_roster)
+  for (c_i in seq_len(n_caregivers)) {
+    for (k in seq_len(n_children)) {
+      present <- nz(get(sprintf("EC01_%d_%d", c_i, k))) | nz(get(sprintf("EC03_%d_%d", c_i, k)))
+      cg_id <- get(sprintf("EC04_%d_%d", c_i, k))
+      blank <- !nz(cg_id)
+      cg_id[blank] <- get(sprintf("CB03_%d", c_i))[blank]
+      idx <- rep(NA_integer_, nrow(df))
+      seen <- integer(nrow(df))
+      for (n in seq_len(n_roster)) {
+        hit <- present & nz(cg_id) & nz(cg[[n]]) & cg_id == cg[[n]] & listed[[n]]
+        seen[hit] <- seen[hit] + 1L
+        take <- hit & seen == k & is.na(idx) & !taken[, n]
+        idx[take] <- n
+      }
+      # A single rostered child and a module is unambiguous.
+      solo <- present & is.na(idx) & n_listed == 1L
+      idx[solo] <- first_listed[solo]
+      # Otherwise fall back on position.
+      posk <- present & is.na(idx) & k <= n_roster & listed[[min(k, n_roster)]]
+      idx[posk] <- min(k, n_roster)
+      # Never claim the same roster child twice.
+      for (n in seq_len(n_roster)) {
+        clash <- !is.na(idx) & idx == n & taken[, n]
+        idx[clash] <- NA_integer_
+        taken[!is.na(idx) & idx == n, n] <- TRUE
+      }
+      out[[sprintf("%d_%d", c_i, k)]] <- idx
+    }
+  }
+  out
+}
+
+#' Build one column block per rostered child
+#'
+#' Turns the household listing into the unit of analysis: for every roster
+#' slot it writes `rost_*` columns with the child's demographics and, where
+#' the child was interviewed, the whole child module (card block, recall,
+#' care-seeking, ORS, outcome) and the caregiver block copied across from the
+#' matching `{c}_{k}` slot. Children who were listed but never interviewed
+#' keep `NA` for the module columns, so they are counted in the denominator
+#' and contribute no vaccination evidence.
+#'
+#' @param df The raw export, after [apply_recall_map()].
+#' @param schedule A [vcs_schedule()].
+#' @param n_caregivers,n_children,n_roster Repeat extents.
+#' @param extras Child- and caregiver-level variable stems to carry across.
+#' @return `df` with the `rost_*` columns added.
+#' @noRd
+kc9_roster_frame <- function(df, schedule, n_caregivers = 3L, n_children = 3L,
+                             n_roster = 4L, extras = character(0)) {
+  nz <- function(x) !is.na(x) & nzchar(trimws(x))
+  get <- function(cn) if (cn %in% names(df)) as.character(df[[cn]]) else rep(NA_character_, nrow(df))
+  idx <- kc9_module_roster_index(df, n_caregivers, n_children, n_roster)
+  slots <- do.call(rbind, lapply(strsplit(names(idx), "_"), as.integer))
+
+  # Module columns to carry onto the rostered child, with their target names.
+  vv <- sprintf("%02d", seq_len(nrow(schedule)))
+  mod <- c("CVH_card_shown", paste0("CVH", vv), paste0("CVH", vv, "_date"),
+           paste0("recall_status_", schedule$vaccine),
+           paste0("recall_ever_", unique(schedule$antigen)),
+           paste0("recall_count_", unique(schedule$antigen)),
+           extras)
+  mod <- unique(mod)
+
+  n_row <- nrow(df)
+  for (n in seq_len(n_roster)) {
+    df[[sprintf("rost_name_%d", n)]]      <- get(sprintf("HL02_child_name_%d", n))
+    df[[sprintf("rost_dob_%d", n)]]       <- get(sprintf("HL05_child_dob_%d", n))
+    df[[sprintf("rost_sex_%d", n)]]       <- get(sprintf("HL03_child_gender_%d", n))
+    df[[sprintf("rost_months_%d", n)]]    <- get(sprintf("HL04_child_months_%d", n))
+    df[[sprintf("rost_caregiver_%d", n)]] <- get(sprintf("HL08_caregiver_id_%d", n))
+    # A roster child exists when a name or a date of birth was recorded.
+    listed <- nz(df[[sprintf("rost_name_%d", n)]]) | nz(df[[sprintf("rost_dob_%d", n)]])
+    df[[sprintf("rost_listed_%d", n)]] <- ifelse(listed, "1", NA_character_)
+
+    # Which module slot (if any) belongs to this roster child, per row?
+    cslot <- rep(NA_integer_, n_row)
+    kslot <- rep(NA_integer_, n_row)
+    for (s in seq_along(idx)) {
+      hit <- !is.na(idx[[s]]) & idx[[s]] == n & is.na(cslot)
+      cslot[hit] <- slots[s, 1]
+      kslot[hit] <- slots[s, 2]
+    }
+    df[[sprintf("rost_interviewed_%d", n)]] <- ifelse(!is.na(cslot), "1", "0")
+    df[[sprintf("rost_caregiver_index_%d", n)]] <- as.character(cslot)
+
+    for (v in mod) {
+      out <- rep(NA_character_, n_row)
+      for (s in seq_along(idx)) {
+        c_i <- slots[s, 1]; k <- slots[s, 2]
+        col <- sprintf("%s_%d_%d", v, c_i, k)
+        if (!col %in% names(df)) next
+        sel <- !is.na(cslot) & cslot == c_i & kslot == k
+        if (any(sel)) out[sel] <- as.character(df[[col]])[sel]
+      }
+      df[[sprintf("rost_%s_%d", v, n)]] <- out
+    }
+    # Caregiver education / marital status from the adult roster, which is
+    # available even when the child was never interviewed.
+    edu <- mar <- rep(NA_character_, n_row)
+    line <- suppressWarnings(as.integer(df[[sprintf("rost_caregiver_%d", n)]]))
+    for (a in seq_len(max(n_roster, 4L) * 2L)) {
+      take <- !is.na(line) & line == a
+      if (!any(take)) next
+      edu[take] <- get(sprintf("HL07_school_%d", a))[take]
+      mar[take] <- get(sprintf("HL06_marital_%d", a))[take]
+    }
+    df[[sprintf("rost_caregiver_education_%d", n)]] <- edu
+    df[[sprintf("rost_caregiver_marital_%d", n)]] <- mar
+  }
+  modules <- sum(vapply(seq_along(idx), function(s) {
+    cn <- sprintf("EC01_%d_%d", slots[s, 1], slots[s, 2])
+    if (cn %in% names(df)) sum(nz(df[[cn]])) else 0
+  }, numeric(1)))
+  matched <- sum(vapply(seq_len(n_roster), function(n) sum(df[[sprintf("rost_interviewed_%d", n)]] == "1"), numeric(1)))
+  attr(df, "roster_frame") <- c(
+    n_roster = n_roster,
+    listed = sum(vapply(seq_len(n_roster), function(n) sum(nz(df[[sprintf("rost_listed_%d", n)]])), numeric(1))),
+    modules = modules, matched = matched, unmatched = modules - matched)
+  df
 }

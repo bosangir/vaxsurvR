@@ -415,8 +415,88 @@ plot_organ_pipe <- function(x, vaccine, subset = NULL, prefix = "cov_",
     ) +
     ggplot2::scale_x_continuous(expand = c(0, 0), breaks = NULL) +
     ggplot2::labs(x = NULL, title = title,
-                  caption = sprintf("Estimated coverage = %.1f%%. Column width is proportional to the sum of survey weights in the cluster; the dashed line is the number of children sampled.", est)) +
+                  caption = paste(strwrap(sprintf("Estimated coverage = %.1f%%. Column width is proportional to the sum of survey weights in the cluster; the dashed line is the number of children sampled.", est), width = 110), collapse = "\n")) +
     theme_vcs(palette = palette, grid = "none") +
     ggplot2::theme(panel.border = ggplot2::element_rect(fill = NA, colour = "black"))
   p
+}
+
+#' Organ-pipe plots for every stratum on one page
+#'
+#' Draws the organ-pipe plot of a dose for each level of a stratifier as one
+#' faceted figure, so that a report can show the cluster-level heterogeneity of
+#' every health zone on a single landscape page instead of one page per zone.
+#' Within each panel the clusters are ordered from the highest coverage to the
+#' lowest, exactly as in [plot_organ_pipe()], and the panel subtitle gives the
+#' number of clusters and children behind it.
+#'
+#' @param x A `vcs_design` or `vcs_data`.
+#' @param vaccine Dose to plot, for example `"PENTA1"`.
+#' @param by Column of the child table defining the panels.
+#' @param levels Optional subset and ordering of the panel levels.
+#' @param prefix Prefix of the coverage columns.
+#' @param min_n Panels resting on fewer children than this are dropped.
+#' @param ncol Number of panels per row.
+#' @param palette A [vcs_palette()].
+#' @param base_size Base font size in points.
+#' @param title Optional title.
+#' @return A ggplot.
+#' @export
+#' @family curves
+plot_organ_pipe_grid <- function(x, vaccine, by = "zone_label", levels = NULL,
+                                 prefix = "cov_", min_n = 25, ncol = 6,
+                                 palette = vcs_palette(), base_size = 9, title = NULL) {
+  assert_installed("ggplot2", "plot_organ_pipe_grid()")
+  assert_string(vaccine)
+  ch <- if (is_vcs_design(x)) x$data else {
+    assert_vcs_data(x)
+    vcs_children(x)
+  }
+  col <- paste0(prefix, vaccine)
+  if (!col %in% names(ch)) {
+    vcs_abort(sprintf("Column \"%s\" not found; derive coverage first.", col),
+              class = "vaxsurvR_value_error")
+  }
+  if (!by %in% names(ch)) {
+    vcs_abort(sprintf("Column \"%s\" not found in the child table.", by),
+              class = "vaxsurvR_missing_variable")
+  }
+  g <- as.character(ch[[by]])
+  lv <- levels %||% sort(unique(stats::na.omit(g)))
+  pieces <- lapply(lv, function(l) {
+    s <- ch[!is.na(g) & g == l, , drop = FALSE]
+    y <- suppressWarnings(as.numeric(s[[col]]))
+    ok <- !is.na(y)
+    if (sum(ok) < min_n) return(NULL)
+    cl <- dplyr::group_by(tibble::tibble(psu = as.character(s$psu)[ok], y = y[ok]), .data$psu)
+    cl <- dplyr::summarise(cl, n = dplyr::n(), cov = 100 * mean(.data$y), .groups = "drop")
+    cl <- cl[order(-cl$cov, -cl$n), , drop = FALSE]
+    # Equal-width pipes: this report is unweighted, so every cluster counts the same.
+    cl$xmax <- seq_len(nrow(cl)) / nrow(cl) * 100
+    cl$xmin <- cl$xmax - 100 / nrow(cl)
+    cl$panel <- sprintf("%s\n%d clusters, %d children, %.1f%%", l, nrow(cl), sum(ok),
+                        100 * mean(y[ok]))
+    cl
+  })
+  d <- dplyr::bind_rows(pieces)
+  if (!nrow(d)) {
+    vcs_abort("No stratum has enough children to draw.", class = "vaxsurvR_empty_input")
+  }
+  d$panel <- factor(d$panel, levels = unique(d$panel))
+  ggplot2::ggplot(d) +
+    ggplot2::geom_rect(ggplot2::aes(xmin = .data$xmin, xmax = .data$xmax,
+                                    ymin = 0, ymax = .data$cov),
+                       fill = palette$secondary, colour = "white", linewidth = 0.15) +
+    ggplot2::facet_wrap(~panel, ncol = ncol) +
+    ggplot2::scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, 25),
+                                labels = function(v) paste0(v, "%"), expand = c(0, 0)) +
+    ggplot2::scale_x_continuous(limits = c(0, 100), expand = c(0, 0)) +
+    ggplot2::labs(x = "Clusters, ordered from the highest coverage to the lowest",
+                  y = sprintf("%s coverage", vaccine),
+                  title = title %||% sprintf("%s coverage by cluster, within each health zone", vaccine)) +
+    theme_vcs(base_size = base_size, palette = palette, grid = "y") +
+    ggplot2::theme(axis.text.x = ggplot2::element_blank(),
+                   axis.ticks.x = ggplot2::element_blank(),
+                   strip.text = ggplot2::element_text(size = base_size - 1.5, lineheight = 1.05),
+                   panel.spacing = ggplot2::unit(4, "pt"))
 }

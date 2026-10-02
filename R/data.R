@@ -83,3 +83,32 @@
 #' @examples
 #' vcs_example_schedule
 "vcs_example_schedule"
+
+#' Synthetic sampling frame for the example survey
+#'
+#' The frame behind [vcs_example]: 45 sampling units across the same
+#' administrative hierarchy as the survey, of which 30 were visited and 15 were
+#' never reached. That makes "never opened" a real category in the fieldwork
+#' tracking examples, which is the point of measuring progress against a frame
+#' rather than against the data.
+#'
+#' Column names follow the convention [read_psu_frame()] expects
+#' (`project_psu_id`, `psu_type`, `adm0`--`adm3`, `centroid_longitude`,
+#' `centroid_latitude`), so the table is shipped as-is and carries no spatial
+#' classes. Polygons for [plot_admin_map()] have to come from a real boundary
+#' file.
+#'
+#' @format A [tibble][tibble::tibble] with 45 rows: 40 primary units and 5
+#'   backups, in 2 provinces (`adm1`), 4 districts (`adm2`) and 15 zones
+#'   (`adm3`).
+#' @source Simulated; see `data-raw/make_vcs_example.R`.
+#' @seealso [read_psu_frame()], [psu_map_data()], [admin_map_data()]
+#' @examples
+#' head(vcs_example_frame_raw)
+#' # read_psu_frame() takes the primary and replacement files separately, which
+#' # is how gridded-population frames are supplied.
+#' raw <- vcs_example_frame_raw
+#' frame <- read_psu_frame(primary = raw[raw$psu_type == "Primary", ],
+#'                         backup  = raw[raw$psu_type == "Backup", ])
+#' table(frame$psu_type)
+"vcs_example_frame_raw"

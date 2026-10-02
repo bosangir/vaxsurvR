@@ -214,7 +214,8 @@ sample_size_parameters <- function(design, vaccine, assumed = NULL, prefix = "co
 #'                     segment_population_canvassed = c(100, 250),
 #'                     segment_population_total = c(500, 1000))
 #' hh <- data.frame(psu = c("A", "A", "A", "B", "B"),
-#'                  outcome = c("interviewed", "nobody_home", "ineligible", "interviewed", "interviewed"),
+#'                  outcome = c("interviewed", "nobody_home", "ineligible",
+#'                              "interviewed", "interviewed"),
 #'                  n_children = c(1, NA, 0, 2, 1))
 #' kids <- data.frame(psu = c("A", "B", "B", "B"), child_id = 1:4)
 #' compute_survey_weights(frame, hh, kids)

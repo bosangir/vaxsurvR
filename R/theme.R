@@ -3,7 +3,7 @@
 # flextable theme. Everything here is cosmetic; no estimate depends on it.
 #
 # The default look follows the Kongo Central survey reports (green headings,
-# grey rules, Century Gothic where available). Every colour is overridable
+# grey rules, Arial where available). Every colour is overridable
 # through vcs_palette(), and every function that draws something takes a
 # `palette` argument, so a different programme can restyle the output without
 # touching the analysis code.
@@ -81,26 +81,68 @@ vcs_palette <- function(...) {
 #' Font family used for figures
 #'
 #' Resolves the family named in `options(vaxsurvR.font)` (default
-#' `"Century Gothic"`) to one the current graphics device can render, falling
+#' `"Arial"`) to one the current graphics device can render, falling
 #' back to `"sans"` when it is not installed. Never errors.
 #'
+#' Being installed on the system is not enough: the base `postscript` and `pdf`
+#' devices keep their own font database, and naming a family they do not hold
+#' makes every piece of text a warning. `R CMD check` renders examples on
+#' exactly those devices, so the family is checked against the open device as
+#' well as against the system.
+#'
 #' @param family Font family to try first.
-#' @return A single string.
+#' @return A single string: the family, or a fallback the open device accepts.
+#'   On `postscript` and `pdf` devices the fallback is `""`, the device
+#'   default, because those devices do not hold `"sans"` either.
 #' @export
 #' @examples
 #' vcs_font()
-vcs_font <- function(family = getOption("vaxsurvR.font", "Century Gothic")) {
+vcs_font <- function(family = getOption("vaxsurvR.font", "Arial")) {
   if (is.null(family) || !nzchar(family)) {
-    return("sans")
+    return(font_fallback())
   }
-  ok <- tryCatch({
+  installed <- tryCatch({
     if (requireNamespace("systemfonts", quietly = TRUE)) {
       any(tolower(systemfonts::system_fonts()$family) == tolower(family))
     } else {
       FALSE
     }
   }, error = function(e) FALSE)
-  if (isTRUE(ok)) family else "sans"
+  if (!isTRUE(installed) || !isTRUE(device_knows_font(family))) {
+    return(font_fallback())
+  }
+  family
+}
+
+#' A family the open device is guaranteed to accept
+#'
+#' `"sans"` is the right generic everywhere except on the base `postscript` and
+#' `pdf` devices, whose font database does not contain it; there the empty
+#' string selects the device default.
+#' @noRd
+font_fallback <- function() {
+  dev <- tryCatch(names(grDevices::dev.cur()), error = function(e) character(0))
+  if (length(dev) && dev %in% c("postscript", "pdf")) "" else "sans"
+}
+
+#' Can the open device render this family?
+#'
+#' Only the devices with their own font database are consulted; screen and
+#' raster devices resolve families themselves.
+#' @noRd
+device_knows_font <- function(family) {
+  tryCatch({
+    dev <- names(grDevices::dev.cur())
+    if (!length(dev) || !dev %in% c("postscript", "pdf")) {
+      return(TRUE)
+    }
+    known <- if (identical(dev, "pdf")) {
+      names(grDevices::pdfFonts())
+    } else {
+      names(grDevices::postscriptFonts())
+    }
+    tolower(family) %in% tolower(known)
+  }, error = function(e) TRUE)
 }
 
 #' A ggplot2 theme for vaxsurvR report figures
@@ -165,17 +207,26 @@ theme_vcs <- function(base_size = 10, base_family = vcs_font(),
 #' @param autofit Fit column widths to content.
 #' @param header_fill Header background colour. Defaults to `palette$primary`.
 #' @param digits Digits for numeric columns.
-#' @param col_labels Optional named character vector renaming header labels.
+#' @param col_labels Optional named character vector of header labels.
+#' @param total_width Maximum table width in inches. Column widths are scaled
+#'   down to this so that no table runs past the page margin; the default is
+#'   the text width of the report template. `NULL` leaves `autofit()` widths
+#'   untouched.
+#' @param align_table Horizontal placement of the table on the page,
+#'   `"left"` (the default), `"center"` or `"right"`.
 #' @return A `flextable` object.
 #' @export
 #' @examples
 #' if (requireNamespace("flextable", quietly = TRUE)) {
 #'   ft_vcs(data.frame(Zone = c("A", "B"), Coverage = c(81.2, 64.9)))
 #' }
-ft_vcs <- function(x, palette = vcs_palette(), font_size = 9,
-                   font_family = getOption("vaxsurvR.font", "Century Gothic"),
+ft_vcs <- function(x, palette = vcs_palette(),
+                   font_size = getOption("vaxsurvR.table_font_size", 11),
+                   font_family = getOption("vaxsurvR.font", "Arial"),
                    autofit = TRUE, header_fill = NULL, digits = 1,
-                   col_labels = NULL) {
+                   col_labels = NULL,
+                   total_width = getOption("vaxsurvR.table_width", 6.7),
+                   align_table = "left") {
   assert_installed("flextable", "ft_vcs()")
   header_fill <- header_fill %||% palette$primary
   ft <- if (inherits(x, "flextable")) x else flextable::flextable(as.data.frame(x))
@@ -207,6 +258,14 @@ ft_vcs <- function(x, palette = vcs_palette(), font_size = 9,
   # Short tables stay on one page with their caption.
   if (nrow(ft$body$dataset) <= 30L) ft <- flextable::keep_with_next(ft, part = "all")
   if (autofit) ft <- flextable::autofit(ft)
+  # Keep every table inside the text column and flush with the left margin:
+  # autofit() sizes columns to their content, which can run past the page
+  # margin on wide tables, so widths are scaled down to `total_width`.
+  if (!is.null(total_width) && is.finite(total_width)) {
+    ft <- flextable::fit_to_width(ft, max_width = total_width, unit = "in")
+  }
+  ft <- flextable::set_table_properties(ft, layout = "fixed", align = align_table)
+  ft <- flextable::valign(ft, valign = "top", part = "all")
   ft
 }
 
@@ -244,4 +303,65 @@ save_vcs_plot <- function(plot, path, width = 9, height = 6, dpi = 200) {
                     device = dev, bg = "white")
   }
   invisible(path)
+}
+
+#' Themed flextable with grouped section rows
+#'
+#' Renders one table out of several question blocks. Rows whose `group` entry
+#' is `TRUE` become section headings: bold, shaded in the palette's light
+#' tint, spanning the full width of the table; every other row is indented
+#' beneath the heading above it. This is the layout the vaccination coverage
+#' survey reports use for household and caregiver characteristics, where a
+#' dozen short questions would otherwise become a dozen separate tables.
+#'
+#' @param x A data frame. Its first column holds the response labels and the
+#'   section headings.
+#' @param group Logical vector, one entry per row of `x`, marking the section
+#'   heading rows. Alternatively the name of a logical column of `x`, which is
+#'   then dropped from the output.
+#' @param palette A [vcs_palette()].
+#' @param font_size Body font size in points.
+#' @param indent Indent applied to the response rows, in points.
+#' @param notes Optional character vector of footnotes.
+#' @param ... Passed to [ft_vcs()].
+#' @return A `flextable`.
+#' @export
+#' @family report tables
+#' @examples
+#' if (requireNamespace("flextable", quietly = TRUE)) {
+#'   d <- data.frame(Response = c("Sex", "Male", "Female"), Percent = c(NA, 7.4, 92.6))
+#'   ft_grouped(d, group = c(TRUE, FALSE, FALSE))
+#' }
+ft_grouped <- function(x, group, palette = vcs_palette(), font_size = 9,
+                       indent = 10, notes = NULL, ...) {
+  assert_installed(c("flextable", "officer"), "ft_grouped()")
+  x <- as.data.frame(x)
+  if (is.character(group) && length(group) == 1L) {
+    g <- as.logical(x[[group]])
+    x[[group]] <- NULL
+  } else {
+    g <- as.logical(group)
+  }
+  if (length(g) != nrow(x)) {
+    vcs_abort("`group` must have one entry per row of `x`.", class = "vaxsurvR_type_error")
+  }
+  ft <- ft_vcs(x, palette = palette, font_size = font_size, ...)
+  if (any(g)) {
+    # A heading row carries its text in the first cell and spans the rest.
+    ft <- flextable::merge_h(ft, i = which(g), part = "body")
+    ft <- flextable::bg(ft, i = which(g), bg = palette$tertiary, part = "body")
+    ft <- flextable::bold(ft, i = which(g), part = "body")
+    ft <- flextable::color(ft, i = which(g), color = palette$ink, part = "body")
+    ft <- flextable::align(ft, i = which(g), align = "left", part = "body")
+    ft <- flextable::padding(ft, i = which(g), padding.top = 4, padding.bottom = 3, part = "body")
+  }
+  if (any(!g)) {
+    ft <- flextable::padding(ft, i = which(!g), j = 1, padding.left = indent, part = "body")
+  }
+  if (!is.null(notes)) {
+    ft <- flextable::add_footer_lines(ft, values = notes)
+    ft <- flextable::fontsize(ft, size = font_size - 1, part = "footer")
+    ft <- flextable::color(ft, color = palette$grey_dk, part = "footer")
+  }
+  flextable::set_table_properties(ft, layout = "fixed", align = "left")
 }

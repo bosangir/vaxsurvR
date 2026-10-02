@@ -6,13 +6,16 @@
 \alias{vaxsurvR-package}
 \title{vaxsurvR: Management, Quality Assurance, De-Identification and Analysis of Vaccination Coverage Surveys}
 \description{
+\if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
+
 A reproducible, country-independent toolkit for household vaccination coverage surveys. Provides a configurable variable-mapping framework for arbitrary survey exports, structural and vaccination-specific data-quality checks that return machine-readable issue objects, an auditable cleaning trail, deterministic de-identification with disclosure control, complex survey design construction on top of the 'survey' package, and weighted coverage, zero-dose and dropout estimation with confidence intervals and design effects.
 }
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/bosangir/vaxsurvR}
-  \item Report bugs at \url{https://github.com/bosangir/vaxsurvR/issues}
+  \item \url{https://neu-data.github.io/vaxsurvR/}
+  \item \url{https://github.com/neu-data/vaxsurvR}
+  \item Report bugs at \url{https://github.com/neu-data/vaxsurvR/issues}
 }
 
 }

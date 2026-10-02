@@ -15,8 +15,8 @@ Description: A reproducible, country-independent toolkit for household
     weighted coverage, zero-dose and dropout estimation with confidence
     intervals and design effects.
 License: MIT + file LICENSE
-URL: https://github.com/bosangir/vaxsurvR
-BugReports: https://github.com/bosangir/vaxsurvR/issues
+URL: https://neu-data.github.io/vaxsurvR/, https://github.com/neu-data/vaxsurvR
+BugReports: https://github.com/neu-data/vaxsurvR/issues
 Depends:
     R (>= 4.1)
 Imports:

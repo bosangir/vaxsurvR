@@ -2,8 +2,10 @@
 # Visual identity for report output: a palette, a ggplot2 theme and a
 # flextable theme. Everything here is cosmetic; no estimate depends on it.
 #
-# The default look follows the Kongo Central survey reports (green headings,
-# grey rules, Arial where available). Every colour is overridable
+# The default identity colours follow the Neudata Consulting Ltd brand (teal
+# headings, navy and blue accents, grey rules, Arial where available). Colours
+# that carry meaning (VCQI timeliness, MOSV, BeSD, antigens) keep their
+# conventional values. Every colour is overridable
 # through vcs_palette(), and every function that draws something takes a
 # `palette` argument, so a different programme can restyle the output without
 # touching the analysis code.
@@ -23,17 +25,17 @@
 vcs_palette <- function(...) {
   pal <- list(
     # identity
-    primary   = "#4E7D3A",   # heading green
-    secondary = "#8CB369",   # mid green
-    tertiary  = "#C5DCB4",   # pale green
+    primary   = "#055F56",   # Neudata teal (headings, table headers)
+    secondary = "#5FA39B",   # light teal
+    tertiary  = "#D5E9E6",   # pale teal (section rows)
     accent    = "#E0A340",   # amber
     danger    = "#C0504D",   # red
-    info      = "#5B7FA6",   # blue
+    info      = "#0B376C",   # Neudata blue
     ink       = "#1A1A1A",
     grey_dk   = "#595959",
     grey      = "#BFBFBF",
     grey_lt   = "#E6E6E6",
-    bar_fill  = "#6FCF97",   # proportional cell shading in bar tables
+    bar_fill  = "#5FA39B",   # proportional cell shading in bar tables
     # VCTC timeliness segments (VCQI convention)
     timing = c(
       "Too early"        = "#7B2C8A",

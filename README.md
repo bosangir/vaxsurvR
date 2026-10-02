@@ -1,8 +1,16 @@
-# vaxsurvR
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/neu-data/.github/main/assets/banner.svg" alt="Neudata Consulting Ltd" width="100%" />
+
+</div>
+
+# vaxsurvR <img src="man/figures/logo.png" align="right" height="139" alt="vaxsurvR logo" />
 
 <!-- badges: start -->
-[![R-CMD-check](https://github.com/bosangir/vaxsurvR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/bosangir/vaxsurvR/actions/workflows/R-CMD-check.yaml)
-[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![R-CMD-check](https://github.com/neu-data/vaxsurvR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/neu-data/vaxsurvR/actions/workflows/R-CMD-check.yaml)
+[![pkgdown](https://img.shields.io/badge/docs-pkgdown-055F56?style=flat)](https://neu-data.github.io/vaxsurvR/)
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-0B376C.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+![Neudata](https://img.shields.io/badge/Neudata-R%20package-04242F?style=flat)
 <!-- badges: end -->
 
 **Management, quality assurance, de-identification and analysis of vaccination
@@ -17,7 +25,7 @@ or administrative hierarchy is hard-coded.
 
 ```r
 # install.packages("remotes")
-remotes::install_github("bosangir/vaxsurvR")
+remotes::install_github("neu-data/vaxsurvR")
 ```
 
 ## The pipeline
@@ -218,3 +226,12 @@ is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md).
 ## License
 
 MIT © vaxsurvR authors.
+
+---
+
+<div align="center">
+
+Developed and maintained by **[Neudata Consulting Ltd](https://www.neu-data.com)** · *Insight. Impact. Innovation.*
+[www.neu-data.com](https://www.neu-data.com) · [contact@neu-data.com](mailto:contact@neu-data.com)
+
+</div>

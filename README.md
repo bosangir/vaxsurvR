@@ -143,8 +143,8 @@ R Markdown report that renders them to Word.
 ```r
 library(vaxsurvR)
 
-# A SurveyCTO wide export of the DRC KC v9 questionnaire, mapped in one call.
-vcs <- kc9_prepare("DRC_VxCoverage_WIDE.csv", n_caregivers = 3, n_children = 2)
+# A SurveyCTO wide export of the questionnaire, mapped in one call.
+vcs <- kc9_prepare("VxCoverage_Data.csv", n_caregivers = 3, n_children = 2)
 vcs <- erase_illogical_dates(vcs)                 # VCQI date logic, audited
 des <- vcs_design(vcs, ids = ~psu)
 
@@ -159,7 +159,7 @@ Dropout (%)"))
 m <- derive_mosv(vcs)
 plot_mosv_children(m, by = "zone_label")
 
-render_coverage_report("DRC_VxCoverage_WIDE.csv", "Coverage_Report.docx", output_dir = "reports")
+render_coverage_report("VxCoverage_Data.csv", "Coverage_Report.docx", output_dir = "reports")
 use_coverage_report("reports/my_report.Rmd")     # copy the template to edit it
 ```
 

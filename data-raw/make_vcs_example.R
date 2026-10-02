@@ -359,3 +359,40 @@ save(vcs_example_schedule, file = "data/vcs_example_schedule.rda", compress = "x
 
 message("Wrote data/vcs_example*.rda")
 print(vcs_example)
+
+# ---------------------------------------------------------------------------
+# Synthetic sampling frame.
+#
+# 45 primary sampling units across the same administrative hierarchy as the
+# survey: the 30 that were visited plus 15 that were never reached, so that
+# "never opened" is a real category in the tracking examples. Shipped as a
+# plain table in the column names `read_psu_frame()` expects, so the object
+# carries no spatial classes and the package needs no spatial dependency.
+# ---------------------------------------------------------------------------
+
+set.seed(20260818)
+N_FRAME <- 45L
+extra <- N_FRAME - N_PSU
+
+vcs_example_frame_raw <- tibble::tibble(
+  project_psu_id = sprintf("PSU%03d", seq_len(N_FRAME)),
+  psu_type = c(rep("Primary", 40L), rep("Backup", N_FRAME - 40L)),
+  adm0 = "Example Country",
+  adm1 = c(psu_frame$province,
+           rep(c("Province A", "Province B"), length.out = extra)),
+  adm2 = c(psu_frame$district,
+           rep("District E", extra)),
+  # New zones, so that some units sit in zones where nothing was collected:
+  # "no data yet" has to be a real category for the tracking maps to mean
+  # anything.
+  adm3 = c(psu_frame$health_zone,
+           sprintf("Zone %02d", N_PSU %/% 2 + rep(seq_len(5L), length.out = extra))),
+  centroid_longitude = c(psu_frame$base_lon, round(runif(extra, 12.4, 15.9), 4)),
+  centroid_latitude = c(psu_frame$base_lat, round(runif(extra, -5.9, -4.2), 4)),
+  est_pop = round(runif(N_FRAME, 150, 900)),
+  backup_for = c(rep(NA_character_, 40L),
+                 sprintf("PSU%03d", seq_len(N_FRAME - 40L)))
+)
+
+save(vcs_example_frame_raw, file = "data/vcs_example_frame_raw.rda", compress = "xz")
+message("Wrote data/vcs_example_frame_raw.rda (", nrow(vcs_example_frame_raw), " PSUs)")

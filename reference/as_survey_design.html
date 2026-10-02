@@ -101,7 +101,7 @@ wrap.</p>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">des</span> <span class="op">&lt;-</span> <span class="fu">vcs_design</span><span class="op">(</span><span class="fu">derive_vaccination_status</span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">des</span> <span class="op">&lt;-</span> <span class="fu">vcs_design</span><span class="op">(</span><span class="fu"><a href="derive_vaccination_status.html">derive_vaccination_status</a></span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">survey</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/survey/man/surveysummary.html" class="external-link">svymean</a></span><span class="op">(</span><span class="op">~</span><span class="va">cov_BCG</span>, <span class="fu">as_survey_design</span><span class="op">(</span><span class="va">des</span><span class="op">)</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>            mean     SE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> cov_BCG 0.85166 0.0235</span>

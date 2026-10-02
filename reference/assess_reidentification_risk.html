@@ -117,7 +117,7 @@ capture, and says nothing about identifiers hiding in free text.</p>
     </div>
     <div id="see-also">
     <h2>See also</h2>
-    <div class="dont-index"><p><code>generalize_geography()</code>, <code>generalize_age()</code></p></div>
+    <div class="dont-index"><p><code><a href="generalize_geography.html">generalize_geography()</a></code>, <code><a href="generalize_age.html">generalize_age()</a></code></p></div>
     </div>
 
     <div id="ref-examples">
@@ -133,7 +133,7 @@ capture, and says nothing about identifiers hiding in free text.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   below k = 5      : 90 (35.2%)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Consider generalize_geography() or generalize_age() before release.</span>
 <span class="r-in"><span><span class="co"># Coarsening geography raises k.</span></span></span>
-<span class="r-in"><span><span class="va">coarse</span> <span class="op">&lt;-</span> <span class="fu">generalize_geography</span><span class="op">(</span><span class="va">vcs_example</span>, lowest_level <span class="op">=</span> <span class="st">"province"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">coarse</span> <span class="op">&lt;-</span> <span class="fu"><a href="generalize_geography.html">generalize_geography</a></span><span class="op">(</span><span class="va">vcs_example</span>, lowest_level <span class="op">=</span> <span class="st">"province"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">assess_reidentification_risk</span><span class="op">(</span><span class="va">coarse</span><span class="op">)</span><span class="op">$</span><span class="va">prop_below_k</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0</span>
 </code></pre></div>

@@ -128,7 +128,7 @@ a caregiver’s recollection counts as evidence.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> card_or_recall   Documented on the card OR reported by the caregiver.         </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> card_then_recall Card where a card exists; caregiver recall only for children…</span></span></code></pre></div>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">graded</span> <span class="op">&lt;-</span> <span class="fu">derive_evidence</span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">graded</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/derive_evidence.html">derive_evidence</a></span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">graded</span><span class="op">$</span><span class="va">vaccinations</span><span class="op">$</span><span class="va">evidence</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; card_date card_mark    recall      none   unknown </span></span>
@@ -143,8 +143,8 @@ it stays different.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">defs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"card"</span>, <span class="st">"card_date"</span>, <span class="st">"recall"</span>, <span class="st">"card_or_recall"</span><span class="op">)</span></span>
 <span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">defs</span>, <span class="kw">function</span><span class="op">(</span><span class="va">e</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">derive_vaccination_status</span><span class="op">(</span><span class="va">vcs_example</span>, evidence <span class="op">=</span> <span class="va">e</span><span class="op">)</span></span>
-<span>  <span class="va">est</span> <span class="op">&lt;-</span> <span class="fu">estimate_coverage</span><span class="op">(</span><span class="fu">vcs_design</span><span class="op">(</span><span class="va">d</span><span class="op">)</span>, vaccines <span class="op">=</span> <span class="st">"PENTA1"</span><span class="op">)</span></span>
+<span>  <span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/derive_vaccination_status.html">derive_vaccination_status</a></span><span class="op">(</span><span class="va">vcs_example</span>, evidence <span class="op">=</span> <span class="va">e</span><span class="op">)</span></span>
+<span>  <span class="va">est</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/estimate_coverage.html">estimate_coverage</a></span><span class="op">(</span><span class="fu">vcs_design</span><span class="op">(</span><span class="va">d</span><span class="op">)</span>, vaccines <span class="op">=</span> <span class="st">"PENTA1"</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>evidence <span class="op">=</span> <span class="va">e</span>, estimate <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">est</span><span class="op">$</span><span class="va">estimate</span>, <span class="fl">3</span><span class="op">)</span>,</span>
 <span>             denominator <span class="op">=</span> <span class="va">est</span><span class="op">$</span><span class="va">denominator</span><span class="op">)</span></span>
 <span><span class="op">}</span><span class="op">)</span></span>
@@ -161,9 +161,9 @@ card-loss rate.</p>
 <p>If you do want that behaviour, you have to ask for it, and it is
 recorded:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">forced</span> <span class="op">&lt;-</span> <span class="fu">derive_vaccination_status</span><span class="op">(</span><span class="va">vcs_example</span>, evidence <span class="op">=</span> <span class="st">"card"</span>,</span>
+<code class="sourceCode R"><span><span class="va">forced</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/derive_vaccination_status.html">derive_vaccination_status</a></span><span class="op">(</span><span class="va">vcs_example</span>, evidence <span class="op">=</span> <span class="st">"card"</span>,</span>
 <span>                                    missing_as_unvaccinated <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="fu">derivation_rules</span><span class="op">(</span><span class="va">forced</span><span class="op">)</span>, <span class="va">variable</span> <span class="op">==</span> <span class="st">"cov_PENTA1"</span><span class="op">)</span><span class="op">$</span><span class="va">rule</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="fu"><a href="../reference/derivation_rules.html">derivation_rules</a></span><span class="op">(</span><span class="va">forced</span><span class="op">)</span>, <span class="va">variable</span> <span class="op">==</span> <span class="st">"cov_PENTA1"</span><span class="op">)</span><span class="op">$</span><span class="va">rule</span></span>
 <span><span class="co">#&gt;                                                                                                                                            cov_PENTA1 </span></span>
 <span><span class="co">#&gt; "vaccinated = card (Documented on the card (with or without a date). Children with no card are unknown.); missing evidence treated as not vaccinated"</span></span></code></pre></div>
 </div>
@@ -174,7 +174,7 @@ recorded:</p>
 by either source, with every enumerated child in every denominator. That
 is one call:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">estimate_coverage_by_evidence</span><span class="op">(</span><span class="va">vcs_example</span>, vaccines <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BCG"</span>, <span class="st">"PENTA3"</span>, <span class="st">"MCV1"</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/estimate_coverage_by_evidence.html">estimate_coverage_by_evidence</a></span><span class="op">(</span><span class="va">vcs_example</span>, vaccines <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BCG"</span>, <span class="st">"PENTA3"</span>, <span class="st">"MCV1"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;vcs_estimate: 9 row(s)&gt;</span></span>
 <span><span class="co">#&gt;   evidence : card | recall | card_or_recall</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 9 × 14</span></span></span>
@@ -199,7 +199,7 @@ leaves such children out of that row, so the card row becomes coverage
 among card holders. They answer different questions; state which one a
 table uses.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">estimate_coverage_by_evidence</span><span class="op">(</span><span class="va">vcs_example</span>, vaccines <span class="op">=</span> <span class="st">"PENTA3"</span>,</span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/estimate_coverage_by_evidence.html">estimate_coverage_by_evidence</a></span><span class="op">(</span><span class="va">vcs_example</span>, vaccines <span class="op">=</span> <span class="st">"PENTA3"</span>,</span>
 <span>                              denominator <span class="op">=</span> <span class="st">"determinable"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;vcs_estimate: 3 row(s)&gt;</span></span>
 <span><span class="co">#&gt;   evidence : card | recall | card_or_recall</span></span>
@@ -227,10 +227,10 @@ then recalled when the count is at least <em>n</em>. See
 <h2 id="coverage">Coverage<a class="anchor" aria-label="anchor" href="#coverage"></a>
 </h2>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">d</span>   <span class="op">&lt;-</span> <span class="fu">derive_vaccination_status</span><span class="op">(</span><span class="va">vcs_example</span>, evidence <span class="op">=</span> <span class="st">"card_or_recall"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">d</span>   <span class="op">&lt;-</span> <span class="fu"><a href="../reference/derive_vaccination_status.html">derive_vaccination_status</a></span><span class="op">(</span><span class="va">vcs_example</span>, evidence <span class="op">=</span> <span class="st">"card_or_recall"</span><span class="op">)</span></span>
 <span><span class="va">des</span> <span class="op">&lt;-</span> <span class="fu">vcs_design</span><span class="op">(</span><span class="va">d</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">estimate_coverage</span><span class="op">(</span><span class="va">des</span>, vaccines <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BCG"</span>, <span class="st">"PENTA1"</span>, <span class="st">"PENTA2"</span>, <span class="st">"PENTA3"</span>,</span>
+<span><span class="fu"><a href="../reference/estimate_coverage.html">estimate_coverage</a></span><span class="op">(</span><span class="va">des</span>, vaccines <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BCG"</span>, <span class="st">"PENTA1"</span>, <span class="st">"PENTA2"</span>, <span class="st">"PENTA3"</span>,</span>
 <span>                                    <span class="st">"MCV1"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;vcs_estimate: 5 row(s)&gt;</span></span>
 <span><span class="co">#&gt;   evidence : card_or_recall</span></span>
@@ -245,7 +245,7 @@ then recalled when the count is at least <em>n</em>. See
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 5 more variables: n_unweighted &lt;dbl&gt;, deff &lt;dbl&gt;, neff &lt;dbl&gt;, icc &lt;dbl&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   ci_method &lt;chr&gt;</span></span></span></code></pre></div>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">estimate_coverage</span><span class="op">(</span><span class="va">des</span>, vaccines <span class="op">=</span> <span class="st">"MCV1"</span>, by <span class="op">=</span> <span class="op">~</span><span class="va">stratum</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/estimate_coverage.html">estimate_coverage</a></span><span class="op">(</span><span class="va">des</span>, vaccines <span class="op">=</span> <span class="st">"MCV1"</span>, by <span class="op">=</span> <span class="op">~</span><span class="va">stratum</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;vcs_estimate: 2 row(s)&gt;</span></span>
 <span><span class="co">#&gt;   evidence : card_or_recall</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 14</span></span></span>
@@ -265,8 +265,8 @@ default is the last dose of every antigen series in the schedule.</p>
 <code class="sourceCode R"><span><span class="fu">schedule_final_doses</span><span class="op">(</span><span class="va">vcs_example_schedule</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "BCG"    "OPV3"   "PENTA3" "PCV3"   "IPV1"   "MCV1"   "YF"</span></span></code></pre></div>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">full</span> <span class="op">&lt;-</span> <span class="fu">derive_fully_vaccinated</span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span></span>
-<span><span class="fu">estimate_full_coverage</span><span class="op">(</span><span class="fu">vcs_design</span><span class="op">(</span><span class="va">full</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">full</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/derive_fully_vaccinated.html">derive_fully_vaccinated</a></span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/estimate_full_coverage.html">estimate_full_coverage</a></span><span class="op">(</span><span class="fu">vcs_design</span><span class="op">(</span><span class="va">full</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;vcs_estimate: 1 row(s)&gt;</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 13</span></span></span>
 <span><span class="co">#&gt;   indicator     domain numerator denominator estimate      se conf_low conf_high</span></span>
@@ -276,12 +276,12 @@ default is the last dose of every antigen series in the schedule.</p>
 <span><span class="co">#&gt; <span style="color: #949494;">#   ci_method &lt;chr&gt;</span></span></span></code></pre></div>
 <p>A narrower, and more commonly quoted, definition:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">basic</span> <span class="op">&lt;-</span> <span class="fu">derive_fully_vaccinated</span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">basic</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/derive_fully_vaccinated.html">derive_fully_vaccinated</a></span><span class="op">(</span></span>
 <span>  <span class="va">vcs_example</span>,</span>
 <span>  vaccines <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BCG"</span>, <span class="st">"PENTA3"</span>, <span class="st">"MCV1"</span><span class="op">)</span>,</span>
 <span>  name     <span class="op">=</span> <span class="st">"basic_full"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="fu">estimate_full_coverage</span><span class="op">(</span><span class="fu">vcs_design</span><span class="op">(</span><span class="va">basic</span><span class="op">)</span>, variable <span class="op">=</span> <span class="st">"basic_full"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/estimate_full_coverage.html">estimate_full_coverage</a></span><span class="op">(</span><span class="fu">vcs_design</span><span class="op">(</span><span class="va">basic</span><span class="op">)</span>, variable <span class="op">=</span> <span class="st">"basic_full"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;vcs_estimate: 1 row(s)&gt;</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 13</span></span></span>
 <span><span class="co">#&gt;   indicator  domain    numerator denominator estimate     se conf_low conf_high</span></span>
@@ -291,7 +291,7 @@ default is the last dose of every antigen series in the schedule.</p>
 <span><span class="co">#&gt; <span style="color: #949494;">#   ci_method &lt;chr&gt;</span></span></span></code></pre></div>
 <p>Whichever you use, the definition travels with the column:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="fu">derivation_rules</span><span class="op">(</span><span class="va">basic</span><span class="op">)</span>, <span class="va">variable</span> <span class="op">==</span> <span class="st">"basic_full"</span><span class="op">)</span><span class="op">$</span><span class="va">rule</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="fu"><a href="../reference/derivation_rules.html">derivation_rules</a></span><span class="op">(</span><span class="va">basic</span><span class="op">)</span>, <span class="va">variable</span> <span class="op">==</span> <span class="st">"basic_full"</span><span class="op">)</span><span class="op">$</span><span class="va">rule</span></span>
 <span><span class="co">#&gt;                                                                  basic_full </span></span>
 <span><span class="co">#&gt; "basic_full = all of {BCG, PENTA3, MCV1} under evidence \"card_or_recall\""</span></span></code></pre></div>
 </div>
@@ -302,8 +302,8 @@ default is the last dose of every antigen series in the schedule.</p>
 vaccine. The marker antigen differs between programmes, so it is an
 argument.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">zd</span> <span class="op">&lt;-</span> <span class="fu">derive_zero_dose</span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span></span>
-<span><span class="fu">estimate_zero_dose</span><span class="op">(</span><span class="fu">vcs_design</span><span class="op">(</span><span class="va">zd</span><span class="op">)</span>, by <span class="op">=</span> <span class="op">~</span><span class="va">stratum</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">zd</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/derive_zero_dose.html">derive_zero_dose</a></span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/estimate_zero_dose.html">estimate_zero_dose</a></span><span class="op">(</span><span class="fu">vcs_design</span><span class="op">(</span><span class="va">zd</span><span class="op">)</span>, by <span class="op">=</span> <span class="op">~</span><span class="va">stratum</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;vcs_estimate: 2 row(s)&gt;</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 14</span></span></span>
 <span><span class="co">#&gt;   indicator domain stratum numerator denominator estimate     se conf_low</span></span>
@@ -313,7 +313,7 @@ argument.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 6 more variables: conf_high &lt;dbl&gt;, n_unweighted &lt;dbl&gt;, deff &lt;dbl&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   neff &lt;dbl&gt;, icc &lt;dbl&gt;, ci_method &lt;chr&gt;</span></span></span></code></pre></div>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="fu">derivation_rules</span><span class="op">(</span><span class="va">zd</span><span class="op">)</span>, <span class="va">variable</span> <span class="op">==</span> <span class="st">"zero_dose"</span><span class="op">)</span><span class="op">$</span><span class="va">rule</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="fu"><a href="../reference/derivation_rules.html">derivation_rules</a></span><span class="op">(</span><span class="va">zd</span><span class="op">)</span>, <span class="va">variable</span> <span class="op">==</span> <span class="st">"zero_dose"</span><span class="op">)</span><span class="op">$</span><span class="va">rule</span></span>
 <span><span class="co">#&gt;                                                         zero_dose </span></span>
 <span><span class="co">#&gt; "zero_dose = no dose of PENTA1 under evidence \"card_or_recall\""</span></span></code></pre></div>
 </div>
@@ -324,7 +324,7 @@ argument.</p>
 <p><strong>Coverage difference</strong> – the classic programme
 indicator, computed from two marginal coverage estimates:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">estimate_dropout</span><span class="op">(</span><span class="va">des</span>, first <span class="op">=</span> <span class="st">"PENTA1"</span>, last <span class="op">=</span> <span class="st">"PENTA3"</span>, method <span class="op">=</span> <span class="st">"coverage"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/estimate_dropout.html">estimate_dropout</a></span><span class="op">(</span><span class="va">des</span>, first <span class="op">=</span> <span class="st">"PENTA1"</span>, last <span class="op">=</span> <span class="st">"PENTA3"</span>, method <span class="op">=</span> <span class="st">"coverage"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;vcs_estimate: 1 row(s)&gt;</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 11</span></span></span>
 <span><span class="co">#&gt;   domain   numerator denominator estimate     se conf_low conf_high n_unweighted</span></span>
@@ -335,7 +335,7 @@ indicator, computed from two marginal coverage estimates:</p>
 who received the first dose but not the last, among those who received
 the first:</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">estimate_dropout</span><span class="op">(</span><span class="va">des</span>, first <span class="op">=</span> <span class="st">"PENTA1"</span>, last <span class="op">=</span> <span class="st">"PENTA3"</span>, method <span class="op">=</span> <span class="st">"individual"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/estimate_dropout.html">estimate_dropout</a></span><span class="op">(</span><span class="va">des</span>, first <span class="op">=</span> <span class="st">"PENTA1"</span>, last <span class="op">=</span> <span class="st">"PENTA3"</span>, method <span class="op">=</span> <span class="st">"individual"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;vcs_estimate: 1 row(s)&gt;</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 14</span></span></span>
 <span><span class="co">#&gt;   indicator      domain numerator denominator estimate     se conf_low conf_high</span></span>
@@ -350,7 +350,7 @@ coverage method is what most programme reports quote.
 <code>vaxsurvR</code> computes both and labels which produced each row,
 so a report can state its choice.</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">estimate_dropout</span><span class="op">(</span><span class="va">des</span>, first <span class="op">=</span> <span class="st">"BCG"</span>, last <span class="op">=</span> <span class="st">"MCV1"</span>, by <span class="op">=</span> <span class="op">~</span><span class="va">stratum</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/estimate_dropout.html">estimate_dropout</a></span><span class="op">(</span><span class="va">des</span>, first <span class="op">=</span> <span class="st">"BCG"</span>, last <span class="op">=</span> <span class="st">"MCV1"</span>, by <span class="op">=</span> <span class="op">~</span><span class="va">stratum</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;vcs_estimate: 2 row(s)&gt;</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 15</span></span></span>
 <span><span class="co">#&gt;   indicator        domain stratum numerator denominator estimate     se conf_low</span></span>
@@ -363,7 +363,7 @@ so a report can state its choice.</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pairs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"PENTA1"</span>, <span class="st">"PENTA3"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BCG"</span>, <span class="st">"MCV1"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"PENTA1"</span>, <span class="st">"MCV1"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">pairs</span>, <span class="kw">function</span><span class="op">(</span><span class="va">p</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu">estimate_dropout</span><span class="op">(</span><span class="va">des</span>, <span class="va">p</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="va">p</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"indicator"</span>, <span class="st">"estimate"</span>, <span class="st">"conf_low"</span>,</span>
+<span>  <span class="fu"><a href="../reference/estimate_dropout.html">estimate_dropout</a></span><span class="op">(</span><span class="va">des</span>, <span class="va">p</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="va">p</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"indicator"</span>, <span class="st">"estimate"</span>, <span class="st">"conf_low"</span>,</span>
 <span>                                        <span class="st">"conf_high"</span>, <span class="st">"denominator"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="op">}</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;vcs_estimate: 3 row(s)&gt;</span></span>
@@ -380,7 +380,7 @@ so a report can state its choice.</p>
 <p>Coverage says whether a dose was received. Timeliness says whether it
 was received in the window where it protects.</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tl</span> <span class="op">&lt;-</span> <span class="fu">derive_timeliness</span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">tl</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/derive_timeliness.html">derive_timeliness</a></span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">tl</span><span class="op">$</span><span class="va">vaccinations</span><span class="op">$</span><span class="va">timeliness</span>, useNA <span class="op">=</span> <span class="st">"ifany"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  early timely   late   &lt;NA&gt; </span></span>
@@ -389,7 +389,7 @@ was received in the window where it protects.</p>
 classified; recall carries no date, so recall-only doses are
 <code>NA</code> rather than being counted as untimely.</p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">estimate_timely_coverage</span><span class="op">(</span><span class="fu">vcs_design</span><span class="op">(</span><span class="va">tl</span><span class="op">)</span>,</span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/estimate_timely_coverage.html">estimate_timely_coverage</a></span><span class="op">(</span><span class="fu">vcs_design</span><span class="op">(</span><span class="va">tl</span><span class="op">)</span>,</span>
 <span>                         vaccines <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BCG"</span>, <span class="st">"PENTA1"</span>, <span class="st">"PENTA3"</span>, <span class="st">"MCV1"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;vcs_estimate: 4 row(s)&gt;</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 13</span></span></span>
@@ -409,7 +409,7 @@ classified; recall carries no date, so recall-only doses are
 availability rate belongs in the same table as the coverage it
 conditions.</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">estimate_card_availability</span><span class="op">(</span><span class="fu">vcs_design</span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span>, by <span class="op">=</span> <span class="op">~</span><span class="va">stratum</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/estimate_card_availability.html">estimate_card_availability</a></span><span class="op">(</span><span class="fu">vcs_design</span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span>, by <span class="op">=</span> <span class="op">~</span><span class="va">stratum</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;vcs_estimate: 2 row(s)&gt;</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 14</span></span></span>
 <span><span class="co">#&gt;   indicator domain stratum numerator denominator estimate     se conf_low</span></span>

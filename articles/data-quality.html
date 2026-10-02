@@ -182,7 +182,7 @@ as a side effect, and nothing is modified.</p>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> ID_DUPLICATE CRITICAL        2         1</span></span></code></pre></div>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">issues</span><span class="op">(</span><span class="fu"><a href="../reference/check_psu_structure.html">check_psu_structure</a></span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/issues.html">issues</a></span><span class="op">(</span><span class="fu"><a href="../reference/check_psu_structure.html">check_psu_structure</a></span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 0 × 8</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 8 variables: check &lt;chr&gt;, rule_id &lt;chr&gt;, severity &lt;fct&gt;, level &lt;chr&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   record_id &lt;chr&gt;, variable &lt;chr&gt;, value &lt;chr&gt;, message &lt;chr&gt;</span></span></span></code></pre></div>
@@ -231,7 +231,7 @@ reported:</p>
 </h2>
 <p>Each reads its parameters from the schedule.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">issues</span><span class="op">(</span><span class="fu"><a href="../reference/check_prebirth_vaccination.html">check_prebirth_vaccination</a></span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"record_id"</span>, <span class="st">"value"</span>, <span class="st">"message"</span><span class="op">)</span><span class="op">]</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/issues.html">issues</a></span><span class="op">(</span><span class="fu"><a href="../reference/check_prebirth_vaccination.html">check_prebirth_vaccination</a></span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"record_id"</span>, <span class="st">"value"</span>, <span class="st">"message"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 3</span></span></span>
 <span><span class="co">#&gt;   record_id   value      message                                                </span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                                  </span></span>
@@ -254,9 +254,9 @@ reported:</p>
 <p>Tolerances are arguments, so a survey that accepts a few days of
 slack in card transcription can say so:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="fu">issues</span><span class="op">(</span><span class="fu"><a href="../reference/check_age_at_vaccination.html">check_age_at_vaccination</a></span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="fu"><a href="../reference/issues.html">issues</a></span><span class="op">(</span><span class="fu"><a href="../reference/check_age_at_vaccination.html">check_age_at_vaccination</a></span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 150</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="fu">issues</span><span class="op">(</span><span class="fu"><a href="../reference/check_age_at_vaccination.html">check_age_at_vaccination</a></span><span class="op">(</span><span class="va">vcs_example</span>, tolerance_days <span class="op">=</span> <span class="fl">7</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="fu"><a href="../reference/issues.html">issues</a></span><span class="op">(</span><span class="fu"><a href="../reference/check_age_at_vaccination.html">check_age_at_vaccination</a></span><span class="op">(</span><span class="va">vcs_example</span>, tolerance_days <span class="op">=</span> <span class="fl">7</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 43</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="card-and-recall-disagreement">Card and recall disagreement<a class="anchor" aria-label="anchor" href="#card-and-recall-disagreement"></a>
@@ -280,11 +280,11 @@ and is an <code>ERROR</code>.</p>
 <div class="section level2">
 <h2 id="flags-at-record-level">Flags at record level<a class="anchor" aria-label="anchor" href="#flags-at-record-level"></a>
 </h2>
-<p><code>flag_vaccine_inconsistencies()</code> collapses the checks to
+<p><code><a href="../reference/flag_vaccine_inconsistencies.html">flag_vaccine_inconsistencies()</a></code> collapses the checks to
 one row per child-vaccine record, ready to join onto the analysis
 table.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">flags</span> <span class="op">&lt;-</span> <span class="fu">flag_vaccine_inconsistencies</span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">flags</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flag_vaccine_inconsistencies.html">flag_vaccine_inconsistencies</a></span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">flags</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 5</span></span></span>
 <span><span class="co">#&gt;   child_id vaccine n_flags max_severity rules                             </span></span>
@@ -387,7 +387,7 @@ letting it do it:</p>
 </h3>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".csv"</span><span class="op">)</span></span>
-<span><span class="fu">export_cleaning_log</span><span class="op">(</span><span class="va">cleaned</span>, <span class="va">f</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/export_cleaning_log.html">export_cleaning_log</a></span><span class="op">(</span><span class="va">cleaned</span>, <span class="va">f</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="co">#&gt;      record_id       level         variable original_value new_value</span></span>
 <span><span class="co">#&gt; 1 CH00571/MCV1 vaccination flag_date_future             NA      TRUE</span></span>
@@ -396,8 +396,8 @@ letting it do it:</p>
 <span><span class="co">#&gt; 1 DATE_FUTURE Card date is after the interview date    ERROR   flag</span></span>
 <span><span class="co">#&gt; 2 DATE_FUTURE Card date is after the interview date    ERROR   flag</span></span>
 <span><span class="co">#&gt;                  timestamp package_version</span></span>
-<span><span class="co">#&gt; 1 2026-10-02T16:27:08+0000           0.2.0</span></span>
-<span><span class="co">#&gt; 2 2026-10-02T16:27:08+0000           0.2.0</span></span>
+<span><span class="co">#&gt; 1 2026-10-02T16:33:34+0000           0.2.0</span></span>
+<span><span class="co">#&gt; 2 2026-10-02T16:33:34+0000           0.2.0</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span></span></code></pre></div>
 <p><code>exclude_variables</code> redacts the original values of any
 variable that must not travel with the log.</p>
@@ -416,7 +416,7 @@ coverage rests on cards being seen.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>        126          70              0          0.556                 0 rural  </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>        130          79              0          0.608                 0 urban</span></span></code></pre></div>
 <div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">date_completeness</span><span class="op">(</span><span class="va">vcs_example</span>, by <span class="op">=</span> <span class="op">~</span><span class="va">vaccine</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/date_completeness.html">date_completeness</a></span><span class="op">(</span><span class="va">vcs_example</span>, by <span class="op">=</span> <span class="op">~</span><span class="va">vaccine</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 6</span></span></span>
 <span><span class="co">#&gt;   n_documented n_dated n_partial prop_dated prop_partial vaccine</span></span>
 <span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span></span>

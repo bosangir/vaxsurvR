@@ -151,7 +151,7 @@ the order a real analysis would.</p>
 <h2 id="map">2. Map<a class="anchor" aria-label="anchor" href="#map"></a>
 </h2>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">mapped</span> <span class="op">&lt;-</span> <span class="fu">map_vcs_variables</span><span class="op">(</span><span class="va">raw</span>, <span class="va">dictionary</span>, <span class="va">schedule</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">mapped</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/map_vcs_variables.html">map_vcs_variables</a></span><span class="op">(</span><span class="va">raw</span>, <span class="va">dictionary</span>, <span class="va">schedule</span><span class="op">)</span></span>
 <span><span class="va">mapped</span></span>
 <span><span class="co">#&gt; &lt;vcs_data&gt;</span></span>
 <span><span class="co">#&gt;   households  : 600</span></span>
@@ -176,8 +176,8 @@ the order a real analysis would.</p>
 <p>Look at the critical issues before going further. In a scheduled
 pipeline this is where you would stop:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu">has_issues</span><span class="op">(</span><span class="va">qa</span>, <span class="st">"CRITICAL"</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">issues</span><span class="op">(</span><span class="va">qa</span>, severity <span class="op">=</span> <span class="st">"CRITICAL"</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rule_id"</span>, <span class="st">"record_id"</span>, <span class="st">"message"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">5</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="../reference/has_issues.html">has_issues</a></span><span class="op">(</span><span class="va">qa</span>, <span class="st">"CRITICAL"</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/issues.html">issues</a></span><span class="op">(</span><span class="va">qa</span>, severity <span class="op">=</span> <span class="st">"CRITICAL"</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rule_id"</span>, <span class="st">"record_id"</span>, <span class="st">"message"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">5</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 3</span></span></span>
 <span><span class="co">#&gt;   rule_id       record_id   message                                             </span></span>
@@ -204,19 +204,19 @@ pipeline this is where you would stop:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> DATE_PARTIAL      flag   WARNING        104       104</span></span></code></pre></div>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">log_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".csv"</span><span class="op">)</span></span>
-<span><span class="fu">export_cleaning_log</span><span class="op">(</span><span class="va">cleaned</span>, <span class="va">log_file</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/export_cleaning_log.html">export_cleaning_log</a></span><span class="op">(</span><span class="va">cleaned</span>, <span class="va">log_file</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="derive-the-indicators">5. Derive the indicators<a class="anchor" aria-label="anchor" href="#derive-the-indicators"></a>
 </h2>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">derive_vaccination_status</span><span class="op">(</span><span class="va">cleaned</span>, evidence <span class="op">=</span> <span class="st">"card_or_recall"</span><span class="op">)</span></span>
-<span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">derive_fully_vaccinated</span><span class="op">(</span><span class="va">d</span>, vaccines <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BCG"</span>, <span class="st">"PENTA3"</span>, <span class="st">"MCV1"</span><span class="op">)</span>,</span>
+<code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/derive_vaccination_status.html">derive_vaccination_status</a></span><span class="op">(</span><span class="va">cleaned</span>, evidence <span class="op">=</span> <span class="st">"card_or_recall"</span><span class="op">)</span></span>
+<span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/derive_fully_vaccinated.html">derive_fully_vaccinated</a></span><span class="op">(</span><span class="va">d</span>, vaccines <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BCG"</span>, <span class="st">"PENTA3"</span>, <span class="st">"MCV1"</span><span class="op">)</span>,</span>
 <span>                             name <span class="op">=</span> <span class="st">"basic_full"</span><span class="op">)</span></span>
-<span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">derive_zero_dose</span><span class="op">(</span><span class="va">d</span><span class="op">)</span></span>
-<span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">derive_timeliness</span><span class="op">(</span><span class="va">d</span><span class="op">)</span></span>
+<span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/derive_zero_dose.html">derive_zero_dose</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span></span>
+<span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/derive_timeliness.html">derive_timeliness</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">derivation_rules</span><span class="op">(</span><span class="va">d</span><span class="op">)</span>, <span class="fl">8</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/derivation_rules.html">derivation_rules</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span>, <span class="fl">8</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 8 × 3</span></span></span>
 <span><span class="co">#&gt;   table    variable   rule                                                      </span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                                     </span></span>
@@ -235,7 +235,7 @@ pipeline this is where you would stop:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">salt</span> <span class="op">&lt;-</span> <span class="st">"vignette-salt-not-for-production"</span>   <span class="co"># in production: Sys.getenv("VAXSURVR_SALT")</span></span>
 <span></span>
-<span><span class="va">anon</span> <span class="op">&lt;-</span> <span class="fu">deidentify_vcs</span><span class="op">(</span></span>
+<span><span class="va">anon</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/deidentify_vcs.html">deidentify_vcs</a></span><span class="op">(</span></span>
 <span>  <span class="va">d</span>,</span>
 <span>  remove    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"child_name"</span>, <span class="st">"caregiver_name"</span>, <span class="st">"telephone"</span>, <span class="st">"address"</span><span class="op">)</span>,</span>
 <span>  hash      <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"child_id"</span>, <span class="st">"household_id"</span><span class="op">)</span>,</span>
@@ -262,7 +262,7 @@ pipeline this is where you would stop:</p>
 <h2 id="check-the-weights-then-build-the-design">7. Check the weights, then build the design<a class="anchor" aria-label="anchor" href="#check-the-weights-then-build-the-design"></a>
 </h2>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">issues</span><span class="op">(</span><span class="fu">validate_weights</span><span class="op">(</span><span class="va">anon</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/issues.html">issues</a></span><span class="op">(</span><span class="fu">validate_weights</span><span class="op">(</span><span class="va">anon</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 30 × 8</span></span></span>
 <span><span class="co">#&gt;    check            rule_id      severity level record_id variable value message</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span></span>
@@ -293,7 +293,7 @@ pipeline this is where you would stop:</p>
 <p>The standard presentation: each antigen by card, by recall, and by
 either source, with every child in every denominator.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">by_evidence</span> <span class="op">&lt;-</span> <span class="fu">estimate_coverage_by_evidence</span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">by_evidence</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/estimate_coverage_by_evidence.html">estimate_coverage_by_evidence</a></span><span class="op">(</span></span>
 <span>  <span class="va">anon</span>,</span>
 <span>  vaccines    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BCG"</span>, <span class="st">"PENTA1"</span>, <span class="st">"PENTA3"</span>, <span class="st">"MCV1"</span><span class="op">)</span>,</span>
 <span>  design_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>ids <span class="op">=</span> <span class="op">~</span><span class="va">psu</span>, strata <span class="op">=</span> <span class="op">~</span><span class="va">stratum</span>, weights <span class="op">=</span> <span class="op">~</span><span class="va">weight</span><span class="op">)</span></span>
@@ -319,7 +319,7 @@ either source, with every child in every denominator.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> MCV1      Card or recall       151         256    0.601    0.539     0.664</span></span></code></pre></div>
 <p>Single-definition estimates by domain:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">coverage</span> <span class="op">&lt;-</span> <span class="fu">estimate_coverage</span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">coverage</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/estimate_coverage.html">estimate_coverage</a></span><span class="op">(</span></span>
 <span>  <span class="va">design</span>,</span>
 <span>  vaccines <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BCG"</span>, <span class="st">"PENTA1"</span>, <span class="st">"PENTA2"</span>, <span class="st">"PENTA3"</span>, <span class="st">"MCV1"</span><span class="op">)</span>,</span>
 <span>  by       <span class="op">=</span> <span class="op">~</span><span class="va">health_zone</span></span>
@@ -339,7 +339,7 @@ either source, with every child in every denominator.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 6 more variables: conf_high &lt;dbl&gt;, n_unweighted &lt;dbl&gt;, deff &lt;dbl&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   neff &lt;dbl&gt;, icc &lt;dbl&gt;, ci_method &lt;chr&gt;</span></span></span></code></pre></div>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">estimate_coverage</span><span class="op">(</span><span class="va">design</span>, vaccines <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BCG"</span>, <span class="st">"PENTA1"</span>, <span class="st">"PENTA3"</span>, <span class="st">"MCV1"</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/estimate_coverage.html">estimate_coverage</a></span><span class="op">(</span><span class="va">design</span>, vaccines <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BCG"</span>, <span class="st">"PENTA1"</span>, <span class="st">"PENTA3"</span>, <span class="st">"MCV1"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;vcs_estimate: 4 row(s)&gt;</span></span>
 <span><span class="co">#&gt;   evidence : card_or_recall</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 13</span></span></span>
@@ -352,7 +352,7 @@ either source, with every child in every denominator.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 5 more variables: n_unweighted &lt;dbl&gt;, deff &lt;dbl&gt;, neff &lt;dbl&gt;, icc &lt;dbl&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   ci_method &lt;chr&gt;</span></span></span></code></pre></div>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">estimate_zero_dose</span><span class="op">(</span><span class="va">design</span>, by <span class="op">=</span> <span class="op">~</span><span class="va">stratum</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/estimate_zero_dose.html">estimate_zero_dose</a></span><span class="op">(</span><span class="va">design</span>, by <span class="op">=</span> <span class="op">~</span><span class="va">stratum</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;vcs_estimate: 2 row(s)&gt;</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 14</span></span></span>
 <span><span class="co">#&gt;   indicator domain stratum numerator denominator estimate     se conf_low</span></span>
@@ -362,7 +362,7 @@ either source, with every child in every denominator.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 6 more variables: conf_high &lt;dbl&gt;, n_unweighted &lt;dbl&gt;, deff &lt;dbl&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   neff &lt;dbl&gt;, icc &lt;dbl&gt;, ci_method &lt;chr&gt;</span></span></span></code></pre></div>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">estimate_dropout</span><span class="op">(</span><span class="va">design</span>, first <span class="op">=</span> <span class="st">"PENTA1"</span>, last <span class="op">=</span> <span class="st">"PENTA3"</span>, by <span class="op">=</span> <span class="op">~</span><span class="va">stratum</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/estimate_dropout.html">estimate_dropout</a></span><span class="op">(</span><span class="va">design</span>, first <span class="op">=</span> <span class="st">"PENTA1"</span>, last <span class="op">=</span> <span class="st">"PENTA3"</span>, by <span class="op">=</span> <span class="op">~</span><span class="va">stratum</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;vcs_estimate: 2 row(s)&gt;</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 15</span></span></span>
 <span><span class="co">#&gt;   indicator        domain stratum numerator denominator estimate     se conf_low</span></span>
@@ -372,7 +372,7 @@ either source, with every child in every denominator.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 7 more variables: conf_high &lt;dbl&gt;, n_unweighted &lt;dbl&gt;, deff &lt;dbl&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   neff &lt;dbl&gt;, icc &lt;dbl&gt;, ci_method &lt;chr&gt;, method &lt;chr&gt;</span></span></span></code></pre></div>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">design_effect</span><span class="op">(</span><span class="va">design</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cov_PENTA1"</span>, <span class="st">"cov_PENTA3"</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/design_effect.html">design_effect</a></span><span class="op">(</span><span class="va">design</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cov_PENTA1"</span>, <span class="st">"cov_PENTA3"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 5</span></span></span>
 <span><span class="co">#&gt;   variable   estimate     se  deff     n</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
@@ -428,7 +428,7 @@ against next round’s export without editing any function.</li>
 <li>The raw import is preserved through mapping, so any derived value
 can be traced to its source.</li>
 <li>
-<code>derivation_rules()</code> states every definition
+<code><a href="../reference/derivation_rules.html">derivation_rules()</a></code> states every definition
 applied.</li>
 <li>
 <code><a href="../reference/audit_changes.html">audit_changes()</a></code> states every value touched.</li>

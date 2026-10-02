@@ -184,7 +184,7 @@ in long form</li>
 <p>Any column the package computes carries the rule that produced
 it.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">derivation_rules</span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/derivation_rules.html">derivation_rules</a></span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 3</span></span></span>
 <span><span class="co">#&gt;   table        variable        rule                                             </span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                            </span></span>
@@ -223,7 +223,7 @@ messages.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> WARNING  WARNING       302       198</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> INFO     INFO          103       103</span></span></code></pre></div>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">issues</span><span class="op">(</span><span class="va">qa</span>, severity <span class="op">=</span> <span class="st">"CRITICAL"</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/issues.html">issues</a></span><span class="op">(</span><span class="va">qa</span>, severity <span class="op">=</span> <span class="st">"CRITICAL"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 8</span></span></span>
 <span><span class="co">#&gt;   check                  rule_id severity level record_id variable value message</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span></span>
@@ -239,7 +239,7 @@ messages.</p>
 </h2>
 <p>Derive a coverage indicator, build the design, estimate.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">d</span>   <span class="op">&lt;-</span> <span class="fu">derive_vaccination_status</span><span class="op">(</span><span class="va">vcs_example</span>, evidence <span class="op">=</span> <span class="st">"card_or_recall"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">d</span>   <span class="op">&lt;-</span> <span class="fu"><a href="../reference/derive_vaccination_status.html">derive_vaccination_status</a></span><span class="op">(</span><span class="va">vcs_example</span>, evidence <span class="op">=</span> <span class="st">"card_or_recall"</span><span class="op">)</span></span>
 <span><span class="va">des</span> <span class="op">&lt;-</span> <span class="fu">vcs_design</span><span class="op">(</span><span class="va">d</span><span class="op">)</span></span>
 <span><span class="va">des</span></span>
 <span><span class="co">#&gt; &lt;vcs_design&gt;</span></span>
@@ -249,7 +249,7 @@ messages.</p>
 <span><span class="co">#&gt;   weights : weight</span></span>
 <span><span class="co">#&gt;   lonely PSU rule: adjust</span></span></code></pre></div>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">estimate_coverage</span><span class="op">(</span><span class="va">des</span>, vaccines <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BCG"</span>, <span class="st">"PENTA1"</span>, <span class="st">"PENTA3"</span>, <span class="st">"MCV1"</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/estimate_coverage.html">estimate_coverage</a></span><span class="op">(</span><span class="va">des</span>, vaccines <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BCG"</span>, <span class="st">"PENTA1"</span>, <span class="st">"PENTA3"</span>, <span class="st">"MCV1"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;vcs_estimate: 4 row(s)&gt;</span></span>
 <span><span class="co">#&gt;   evidence : card_or_recall</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 13</span></span></span>
@@ -264,7 +264,7 @@ messages.</p>
 <p>Coverage falls along the schedule, which is what dropout
 measures:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">estimate_dropout</span><span class="op">(</span><span class="va">des</span>, first <span class="op">=</span> <span class="st">"PENTA1"</span>, last <span class="op">=</span> <span class="st">"PENTA3"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/estimate_dropout.html">estimate_dropout</a></span><span class="op">(</span><span class="va">des</span>, first <span class="op">=</span> <span class="st">"PENTA1"</span>, last <span class="op">=</span> <span class="st">"PENTA3"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;vcs_estimate: 1 row(s)&gt;</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 14</span></span></span>
 <span><span class="co">#&gt;   indicator      domain numerator denominator estimate     se conf_low conf_high</span></span>

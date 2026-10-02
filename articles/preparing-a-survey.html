@@ -146,7 +146,7 @@ timeliness only, and never invalidates a dose. Antigen and dose number
 are inferred from the names, so <code>PENTA1</code>, <code>PENTA2</code>
 and <code>PENTA3</code> become one series – which is what
 <code>schedule_final_doses()</code> and
-<code>derive_fully_vaccinated()</code> use.</p>
+<code><a href="../reference/derive_fully_vaccinated.html">derive_fully_vaccinated()</a></code> use.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">schedule_final_doses</span><span class="op">(</span><span class="va">schedule</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "BCG"    "PENTA3" "MCV1"</span></span></code></pre></div>
@@ -372,7 +372,7 @@ column, and it is better to be told.</p>
 <h2 id="mapping">Mapping<a class="anchor" aria-label="anchor" href="#mapping"></a>
 </h2>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">mapped</span> <span class="op">&lt;-</span> <span class="fu">map_vcs_variables</span><span class="op">(</span><span class="va">vcs_example_raw</span>, <span class="va">vcs_example_dictionary</span>,</span>
+<code class="sourceCode R"><span><span class="va">mapped</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/map_vcs_variables.html">map_vcs_variables</a></span><span class="op">(</span><span class="va">vcs_example_raw</span>, <span class="va">vcs_example_dictionary</span>,</span>
 <span>                            <span class="va">vcs_example_schedule</span><span class="op">)</span></span>
 <span><span class="va">mapped</span></span>
 <span><span class="co">#&gt; &lt;vcs_data&gt;</span></span>
@@ -386,7 +386,7 @@ holds a value, so empty repeat slots do not become phantom children.
 Identifiers that are not mapped are constructed and marked as
 derived:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="fu">derivation_rules</span><span class="op">(</span><span class="va">mapped</span><span class="op">)</span>, <span class="va">variable</span> <span class="op">==</span> <span class="st">"child_id"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="fu"><a href="../reference/derivation_rules.html">derivation_rules</a></span><span class="op">(</span><span class="va">mapped</span><span class="op">)</span>, <span class="va">variable</span> <span class="op">==</span> <span class="st">"child_id"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 0 × 3</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 3 variables: table &lt;chr&gt;, variable &lt;chr&gt;, rule &lt;chr&gt;</span></span></span></code></pre></div>
 <p><code>strict = TRUE</code> turns a missing source column into an

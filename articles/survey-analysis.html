@@ -124,7 +124,7 @@ everything downstream runs on it.</p>
 <p>With a mapped dataset, the design variables are already standardised,
 so the call needs no arguments:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">d</span>   <span class="op">&lt;-</span> <span class="fu">derive_vaccination_status</span><span class="op">(</span><span class="va">vcs_example</span>, evidence <span class="op">=</span> <span class="st">"card_or_recall"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">d</span>   <span class="op">&lt;-</span> <span class="fu"><a href="../reference/derive_vaccination_status.html">derive_vaccination_status</a></span><span class="op">(</span><span class="va">vcs_example</span>, evidence <span class="op">=</span> <span class="st">"card_or_recall"</span><span class="op">)</span></span>
 <span><span class="va">des</span> <span class="op">&lt;-</span> <span class="fu">vcs_design</span><span class="op">(</span><span class="va">d</span><span class="op">)</span></span>
 <span><span class="va">des</span></span>
 <span><span class="co">#&gt; &lt;vcs_design&gt;</span></span>
@@ -169,7 +169,7 @@ it should never be reported as coverage.</p>
 <h2 id="checking-the-weights-first">Checking the weights first<a class="anchor" aria-label="anchor" href="#checking-the-weights-first"></a>
 </h2>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">issues</span><span class="op">(</span><span class="fu">validate_weights</span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/issues.html">issues</a></span><span class="op">(</span><span class="fu">validate_weights</span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 30 × 8</span></span></span>
 <span><span class="co">#&gt;    check            rule_id      severity level record_id variable value message</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span></span>
@@ -209,7 +209,7 @@ automatically.</p>
 <p>The rescaling keeps the weight total unchanged, and the original
 column stays. The rule is recorded:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="fu">derivation_rules</span><span class="op">(</span><span class="va">trimmed</span><span class="op">)</span>, <span class="va">variable</span> <span class="op">==</span> <span class="st">"weight_trimmed"</span><span class="op">)</span><span class="op">$</span><span class="va">rule</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="fu"><a href="../reference/derivation_rules.html">derivation_rules</a></span><span class="op">(</span><span class="va">trimmed</span><span class="op">)</span>, <span class="va">variable</span> <span class="op">==</span> <span class="st">"weight_trimmed"</span><span class="op">)</span><span class="op">$</span><span class="va">rule</span></span>
 <span><span class="co">#&gt;                                                                           weight_trimmed </span></span>
 <span><span class="co">#&gt; "weight winsorised at the 0.02 and 0.98 quantiles (0.7945, 1.61) and rescaled by 1.0002"</span></span></code></pre></div>
 <p>If you trim, say so in the methods section.</p>
@@ -219,7 +219,7 @@ column stays. The rule is recorded:</p>
 <h2 id="design-effects">Design effects<a class="anchor" aria-label="anchor" href="#design-effects"></a>
 </h2>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">design_effect</span><span class="op">(</span><span class="va">des</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cov_BCG"</span>, <span class="st">"cov_PENTA1"</span>, <span class="st">"cov_PENTA3"</span>, <span class="st">"cov_MCV1"</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/design_effect.html">design_effect</a></span><span class="op">(</span><span class="va">des</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cov_BCG"</span>, <span class="st">"cov_PENTA1"</span>, <span class="st">"cov_PENTA3"</span>, <span class="st">"cov_MCV1"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 5</span></span></span>
 <span><span class="co">#&gt;   variable   estimate     se  deff     n</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
@@ -243,7 +243,7 @@ remember:</p>
 <span><span class="va">lonely</span><span class="op">$</span><span class="va">households</span><span class="op">$</span><span class="va">stratum</span><span class="op">[</span><span class="va">lonely</span><span class="op">$</span><span class="va">households</span><span class="op">$</span><span class="va">psu</span> <span class="op">==</span> <span class="va">lonely</span><span class="op">$</span><span class="va">households</span><span class="op">$</span><span class="va">psu</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="st">"lonely"</span></span>
 <span></span>
 <span><span class="va">des_lonely</span> <span class="op">&lt;-</span> <span class="fu">vcs_design</span><span class="op">(</span><span class="va">lonely</span>, lonely_psu <span class="op">=</span> <span class="st">"adjust"</span><span class="op">)</span></span>
-<span><span class="fu">estimate_coverage</span><span class="op">(</span><span class="va">des_lonely</span>, vaccines <span class="op">=</span> <span class="st">"BCG"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/estimate_coverage.html">estimate_coverage</a></span><span class="op">(</span><span class="va">des_lonely</span>, vaccines <span class="op">=</span> <span class="st">"BCG"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;vcs_estimate: 1 row(s)&gt;</span></span>
 <span><span class="co">#&gt;   evidence : card_or_recall</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 13</span></span></span>
@@ -265,7 +265,7 @@ at every estimate, so it cannot drift.</p>
 the variance accounts for the fact that domain sample sizes are
 random.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">estimate_coverage</span><span class="op">(</span><span class="va">des</span>, vaccines <span class="op">=</span> <span class="st">"PENTA3"</span>, by <span class="op">=</span> <span class="op">~</span><span class="va">stratum</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/estimate_coverage.html">estimate_coverage</a></span><span class="op">(</span><span class="va">des</span>, vaccines <span class="op">=</span> <span class="st">"PENTA3"</span>, by <span class="op">=</span> <span class="op">~</span><span class="va">stratum</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;vcs_estimate: 2 row(s)&gt;</span></span>
 <span><span class="co">#&gt;   evidence : card_or_recall</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 14</span></span></span>
@@ -276,7 +276,7 @@ random.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 6 more variables: conf_high &lt;dbl&gt;, n_unweighted &lt;dbl&gt;, deff &lt;dbl&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   neff &lt;dbl&gt;, icc &lt;dbl&gt;, ci_method &lt;chr&gt;</span></span></span></code></pre></div>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">estimate_coverage</span><span class="op">(</span><span class="va">des</span>, vaccines <span class="op">=</span> <span class="st">"BCG"</span>, by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"stratum"</span>, <span class="st">"sex"</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/estimate_coverage.html">estimate_coverage</a></span><span class="op">(</span><span class="va">des</span>, vaccines <span class="op">=</span> <span class="st">"BCG"</span>, by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"stratum"</span>, <span class="st">"sex"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;vcs_estimate: 4 row(s)&gt;</span></span>
 <span><span class="co">#&gt;   evidence : card_or_recall</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 15</span></span></span>

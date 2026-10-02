@@ -158,23 +158,23 @@ vcs_design()  -&gt;  estimate_coverage_by_evidence()              estimate with 
 <span><span class="co"># 3. Import and map. The raw export is preserved untouched inside the result.</span></span>
 <span><span class="va">raw</span>    <span class="op">&lt;-</span> <span class="fu">read_vcs</span><span class="op">(</span><span class="st">"survey.csv"</span><span class="op">)</span></span>
 <span><span class="va">raw</span>    <span class="op">&lt;-</span> <span class="fu"><a href="reference/apply_recall_map.html">apply_recall_map</a></span><span class="op">(</span><span class="va">raw</span>, <span class="va">recall</span>, <span class="va">schedule</span>, n_caregivers <span class="op">=</span> <span class="fl">3</span>, n_children <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
-<span><span class="va">mapped</span> <span class="op">&lt;-</span> <span class="fu">map_vcs_variables</span><span class="op">(</span><span class="va">raw</span>, <span class="va">dictionary</span>, <span class="va">schedule</span><span class="op">)</span></span>
+<span><span class="va">mapped</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/map_vcs_variables.html">map_vcs_variables</a></span><span class="op">(</span><span class="va">raw</span>, <span class="va">dictionary</span>, <span class="va">schedule</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># 4. Check. Structured issues, not printed warnings.</span></span>
 <span><span class="va">qa</span> <span class="op">&lt;-</span> <span class="fu">validate_vcs</span><span class="op">(</span><span class="va">mapped</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">qa</span>, by <span class="op">=</span> <span class="st">"severity"</span><span class="op">)</span></span>
-<span><span class="fu">issues</span><span class="op">(</span><span class="va">qa</span>, severity <span class="op">=</span> <span class="st">"CRITICAL"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/issues.html">issues</a></span><span class="op">(</span><span class="va">qa</span>, severity <span class="op">=</span> <span class="st">"CRITICAL"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># 5. Clean. The default ruleset flags; it changes nothing.</span></span>
 <span><span class="va">clean</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/clean_vcs.html">clean_vcs</a></span><span class="op">(</span><span class="va">mapped</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/audit_changes.html">audit_changes</a></span><span class="op">(</span><span class="va">clean</span><span class="op">)</span>          <span class="co"># record, variable, before, after, rule, time</span></span>
 <span></span>
 <span><span class="co"># 6. Derive. Say which evidence counts; the rule is stored on the column.</span></span>
-<span><span class="va">clean</span> <span class="op">&lt;-</span> <span class="fu">derive_vaccination_status</span><span class="op">(</span><span class="va">clean</span>, evidence <span class="op">=</span> <span class="st">"card_or_recall"</span><span class="op">)</span></span>
-<span><span class="va">clean</span> <span class="op">&lt;-</span> <span class="fu">derive_zero_dose</span><span class="op">(</span><span class="va">clean</span><span class="op">)</span></span>
+<span><span class="va">clean</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/derive_vaccination_status.html">derive_vaccination_status</a></span><span class="op">(</span><span class="va">clean</span>, evidence <span class="op">=</span> <span class="st">"card_or_recall"</span><span class="op">)</span></span>
+<span><span class="va">clean</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/derive_zero_dose.html">derive_zero_dose</a></span><span class="op">(</span><span class="va">clean</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># 7. De-identify. The salt comes from the environment and is never written out.</span></span>
-<span><span class="va">anon</span> <span class="op">&lt;-</span> <span class="fu">deidentify_vcs</span><span class="op">(</span></span>
+<span><span class="va">anon</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/deidentify_vcs.html">deidentify_vcs</a></span><span class="op">(</span></span>
 <span>  <span class="va">clean</span>,</span>
 <span>  remove <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"child_name"</span>, <span class="st">"caregiver_name"</span>, <span class="st">"telephone"</span><span class="op">)</span>,</span>
 <span>  hash   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"child_id"</span>, <span class="st">"household_id"</span><span class="op">)</span>,</span>
@@ -183,7 +183,7 @@ vcs_design()  -&gt;  estimate_coverage_by_evidence()              estimate with 
 <span></span>
 <span><span class="co"># 8. Estimate, with the design preserved throughout. Card, recall and either</span></span>
 <span><span class="co">#    source side by side, every child in every denominator.</span></span>
-<span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu">estimate_coverage_by_evidence</span><span class="op">(</span></span>
+<span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/estimate_coverage_by_evidence.html">estimate_coverage_by_evidence</a></span><span class="op">(</span></span>
 <span>  <span class="va">anon</span>,</span>
 <span>  vaccines    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BCG"</span>, <span class="st">"PENTA1"</span>, <span class="st">"PENTA3"</span>, <span class="st">"MCV1"</span><span class="op">)</span>,</span>
 <span>  by          <span class="op">=</span> <span class="op">~</span><span class="va">health_zone</span>,</span>
@@ -191,7 +191,7 @@ vcs_design()  -&gt;  estimate_coverage_by_evidence()              estimate with 
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">design</span> <span class="op">&lt;-</span> <span class="fu">vcs_design</span><span class="op">(</span><span class="va">anon</span>, ids <span class="op">=</span> <span class="op">~</span><span class="va">psu</span>, strata <span class="op">=</span> <span class="op">~</span><span class="va">stratum</span>, weights <span class="op">=</span> <span class="op">~</span><span class="va">weight</span><span class="op">)</span></span>
-<span><span class="fu">estimate_dropout</span><span class="op">(</span><span class="va">design</span>, first <span class="op">=</span> <span class="st">"PENTA1"</span>, last <span class="op">=</span> <span class="st">"PENTA3"</span>, by <span class="op">=</span> <span class="op">~</span><span class="va">health_zone</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="reference/estimate_dropout.html">estimate_dropout</a></span><span class="op">(</span><span class="va">design</span>, first <span class="op">=</span> <span class="st">"PENTA1"</span>, last <span class="op">=</span> <span class="st">"PENTA3"</span>, by <span class="op">=</span> <span class="op">~</span><span class="va">health_zone</span><span class="op">)</span></span></code></pre></div>
 <p>Every function above runs on the synthetic dataset shipped with the package, so you can try the whole pipeline before you have data:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/bosangir/vaxsurvR" class="external-link">vaxsurvR</a></span><span class="op">)</span></span>
@@ -199,12 +199,12 @@ vcs_design()  -&gt;  estimate_coverage_by_evidence()              estimate with 
 <span><span class="va">vcs_example</span>                                    <span class="co"># 600 households, 256 children</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="fu">validate_vcs</span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span>, by <span class="op">=</span> <span class="st">"severity"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">d</span>   <span class="op">&lt;-</span> <span class="fu">derive_vaccination_status</span><span class="op">(</span><span class="va">vcs_example</span>, evidence <span class="op">=</span> <span class="st">"card_or_recall"</span><span class="op">)</span></span>
+<span><span class="va">d</span>   <span class="op">&lt;-</span> <span class="fu"><a href="reference/derive_vaccination_status.html">derive_vaccination_status</a></span><span class="op">(</span><span class="va">vcs_example</span>, evidence <span class="op">=</span> <span class="st">"card_or_recall"</span><span class="op">)</span></span>
 <span><span class="va">des</span> <span class="op">&lt;-</span> <span class="fu">vcs_design</span><span class="op">(</span><span class="va">d</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">estimate_coverage</span><span class="op">(</span><span class="va">des</span>, vaccines <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BCG"</span>, <span class="st">"PENTA1"</span>, <span class="st">"PENTA3"</span>, <span class="st">"MCV1"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu">estimate_coverage_by_evidence</span><span class="op">(</span><span class="va">vcs_example</span>, vaccines <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BCG"</span>, <span class="st">"PENTA3"</span>, <span class="st">"MCV1"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu">estimate_dropout</span><span class="op">(</span><span class="va">des</span>, first <span class="op">=</span> <span class="st">"PENTA1"</span>, last <span class="op">=</span> <span class="st">"PENTA3"</span>, by <span class="op">=</span> <span class="op">~</span><span class="va">stratum</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="reference/estimate_coverage.html">estimate_coverage</a></span><span class="op">(</span><span class="va">des</span>, vaccines <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BCG"</span>, <span class="st">"PENTA1"</span>, <span class="st">"PENTA3"</span>, <span class="st">"MCV1"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/estimate_coverage_by_evidence.html">estimate_coverage_by_evidence</a></span><span class="op">(</span><span class="va">vcs_example</span>, vaccines <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BCG"</span>, <span class="st">"PENTA3"</span>, <span class="st">"MCV1"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/estimate_dropout.html">estimate_dropout</a></span><span class="op">(</span><span class="va">des</span>, first <span class="op">=</span> <span class="st">"PENTA1"</span>, last <span class="op">=</span> <span class="st">"PENTA3"</span>, by <span class="op">=</span> <span class="op">~</span><span class="va">stratum</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="the-full-report-in-one-call">The full report in one call<a class="anchor" aria-label="anchor" href="#the-full-report-in-one-call"></a>
@@ -214,19 +214,19 @@ vcs_design()  -&gt;  estimate_coverage_by_evidence()              estimate with 
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/bosangir/vaxsurvR" class="external-link">vaxsurvR</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># A SurveyCTO wide export of the DRC KC v9 questionnaire, mapped in one call.</span></span>
-<span><span class="va">vcs</span> <span class="op">&lt;-</span> <span class="fu">kc9_prepare</span><span class="op">(</span><span class="st">"DRC_VxCoverage_WIDE.csv"</span>, n_caregivers <span class="op">=</span> <span class="fl">3</span>, n_children <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
-<span><span class="va">vcs</span> <span class="op">&lt;-</span> <span class="fu">erase_illogical_dates</span><span class="op">(</span><span class="va">vcs</span><span class="op">)</span>                 <span class="co"># VCQI date logic, audited</span></span>
+<span><span class="va">vcs</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/kc9_prepare.html">kc9_prepare</a></span><span class="op">(</span><span class="st">"DRC_VxCoverage_WIDE.csv"</span>, n_caregivers <span class="op">=</span> <span class="fl">3</span>, n_children <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="va">vcs</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/erase_illogical_dates.html">erase_illogical_dates</a></span><span class="op">(</span><span class="va">vcs</span><span class="op">)</span>                 <span class="co"># VCQI date logic, audited</span></span>
 <span><span class="va">des</span> <span class="op">&lt;-</span> <span class="fu">vcs_design</span><span class="op">(</span><span class="va">vcs</span>, ids <span class="op">=</span> <span class="op">~</span><span class="va">psu</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">v</span> <span class="op">&lt;-</span> <span class="fu">estimate_vctc</span><span class="op">(</span><span class="va">vcs</span>, design <span class="op">=</span> <span class="va">des</span>, vaccines <span class="op">=</span> <span class="fu">kc9_epi_doses</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">v</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/estimate_vctc.html">estimate_vctc</a></span><span class="op">(</span><span class="va">vcs</span>, design <span class="op">=</span> <span class="va">des</span>, vaccines <span class="op">=</span> <span class="fu"><a href="reference/kc9_epi_doses.html">kc9_epi_doses</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu">plot_vctc</span><span class="op">(</span><span class="va">v</span><span class="op">)</span>                                      <span class="co"># the VCTC</span></span>
 <span></span>
-<span><span class="va">st</span>  <span class="op">&lt;-</span> <span class="fu">kc9_strata</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="va">tab</span> <span class="op">&lt;-</span> <span class="fu">estimate_stratified</span><span class="op">(</span><span class="va">des</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">by</span> <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="fu">estimate_dropout</span><span class="op">(</span><span class="va">x</span>, <span class="st">"PENTA1"</span>, <span class="st">"PENTA3"</span>, by <span class="op">=</span> <span class="va">by</span><span class="op">)</span>, <span class="va">st</span><span class="op">)</span></span>
+<span><span class="va">st</span>  <span class="op">&lt;-</span> <span class="fu"><a href="reference/kc9_strata.html">kc9_strata</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">tab</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/estimate_stratified.html">estimate_stratified</a></span><span class="op">(</span><span class="va">des</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">by</span> <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="fu"><a href="reference/estimate_dropout.html">estimate_dropout</a></span><span class="op">(</span><span class="va">x</span>, <span class="st">"PENTA1"</span>, <span class="st">"PENTA3"</span>, by <span class="op">=</span> <span class="va">by</span><span class="op">)</span>, <span class="va">st</span><span class="op">)</span></span>
 <span><span class="fu">plot_bar_table</span><span class="op">(</span><span class="va">tab</span>, <span class="fu"><a href="reference/bar_measure.html">bar_measure</a></span><span class="op">(</span><span class="st">"estimate"</span>, <span class="st">"denominator"</span>, label <span class="op">=</span> <span class="st">"PENTA1-PENTA3</span></span>
 <span><span class="st">Dropout (%)"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu">derive_mosv</span><span class="op">(</span><span class="va">vcs</span><span class="op">)</span></span>
+<span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/derive_mosv.html">derive_mosv</a></span><span class="op">(</span><span class="va">vcs</span><span class="op">)</span></span>
 <span><span class="fu">plot_mosv_children</span><span class="op">(</span><span class="va">m</span>, by <span class="op">=</span> <span class="st">"zone_label"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">render_coverage_report</span><span class="op">(</span><span class="st">"DRC_VxCoverage_WIDE.csv"</span>, <span class="st">"Coverage_Report.docx"</span>, output_dir <span class="op">=</span> <span class="st">"reports"</span><span class="op">)</span></span>
@@ -245,7 +245,7 @@ vcs_design()  -&gt;  estimate_coverage_by_evidence()              estimate with 
 <li>
 <strong>Card and recall are never conflated.</strong> Every coverage figure states which evidence definition produced it, and the rule is stored on the column.</li>
 <li>
-<strong>Observed and derived variables stay distinguishable.</strong> <code>derivation_rules()</code> lists every derived column and the rule behind it.</li>
+<strong>Observed and derived variables stay distinguishable.</strong> <code><a href="reference/derivation_rules.html">derivation_rules()</a></code> lists every derived column and the rule behind it.</li>
 <li>
 <strong>The design survives to the end.</strong> Estimation runs on a <code><a href="https://rdrr.io/pkg/survey/man/svydesign.html" class="external-link">survey::svydesign</a></code>; vaxsurvR does not implement a competing variance estimator.</li>
 <li>
@@ -283,7 +283,7 @@ vcs_design()  -&gt;  estimate_coverage_by_evidence()              estimate with 
 <tr>
 <td>What counts as vaccinated</td>
 <td>
-<code>evidence =</code> in <code>derive_vaccination_status()</code>
+<code>evidence =</code> in <code><a href="reference/derive_vaccination_status.html">derive_vaccination_status()</a></code>
 </td>
 </tr>
 <tr>
@@ -294,19 +294,19 @@ vcs_design()  -&gt;  estimate_coverage_by_evidence()              estimate with 
 <tr>
 <td>Denominator convention</td>
 <td>
-<code>denominator =</code> in <code>estimate_coverage_by_evidence()</code>
+<code>denominator =</code> in <code><a href="reference/estimate_coverage_by_evidence.html">estimate_coverage_by_evidence()</a></code>
 </td>
 </tr>
 <tr>
 <td>Fully vaccinated</td>
 <td>
-<code>vaccines =</code> in <code>derive_fully_vaccinated()</code>
+<code>vaccines =</code> in <code><a href="reference/derive_fully_vaccinated.html">derive_fully_vaccinated()</a></code>
 </td>
 </tr>
 <tr>
 <td>Zero-dose marker</td>
 <td>
-<code>marker =</code> in <code>derive_zero_dose()</code>
+<code>marker =</code> in <code><a href="reference/derive_zero_dose.html">derive_zero_dose()</a></code>
 </td>
 </tr>
 <tr>
@@ -318,7 +318,7 @@ vcs_design()  -&gt;  estimate_coverage_by_evidence()              estimate with 
 <tr>
 <td>Disclosure control</td>
 <td>
-<code>generalize_geography()</code>, <code>generalize_age()</code>, <code>shift_dates()</code>
+<code><a href="reference/generalize_geography.html">generalize_geography()</a></code>, <code><a href="reference/generalize_age.html">generalize_age()</a></code>, <code>shift_dates()</code>
 </td>
 </tr>
 </tbody>

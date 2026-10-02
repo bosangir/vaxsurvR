@@ -118,7 +118,7 @@ seconds.</p>
 <p><code>vaxsurvR</code> therefore ships <strong>no default
 salt</strong>, and refuses to hash without one.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">hash_identifier</span><span class="op">(</span><span class="st">"CH0001"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/hash_identifier.html">hash_identifier</a></span><span class="op">(</span><span class="st">"CH0001"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;"> in `vcs_abort()`:</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> `salt` is required. Read it from an environment variable, e.g. `Sys.getenv("VAXSURVR_SALT")`; never hard-code it.</span></span></code></pre></div>
 <p>In production the salt comes from the environment and never appears
@@ -135,10 +135,10 @@ log, or the console.</p>
 <div class="section level2">
 <h2 id="finding-what-needs-treating">Finding what needs treating<a class="anchor" aria-label="anchor" href="#finding-what-needs-treating"></a>
 </h2>
-<p><code>identify_pii()</code> scans column names and values, and
+<p><code><a href="../reference/identify_pii.html">identify_pii()</a></code> scans column names and values, and
 reports what the dictionary names outright.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">pii</span> <span class="op">&lt;-</span> <span class="fu">identify_pii</span><span class="op">(</span><span class="va">vcs_example_raw</span>, <span class="va">vcs_example_dictionary</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">pii</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/identify_pii.html">identify_pii</a></span><span class="op">(</span><span class="va">vcs_example_raw</span>, <span class="va">vcs_example_dictionary</span><span class="op">)</span></span>
 <span><span class="va">pii</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 48 × 5</span></span></span>
 <span><span class="co">#&gt;    variable       category  basis                        confidence n_nonmissing</span></span>
@@ -163,22 +163,22 @@ observation box is invisible to any automated scan.</p>
 <h2 id="hashing">Hashing<a class="anchor" aria-label="anchor" href="#hashing"></a>
 </h2>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">hash_identifier</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"CH0001"</span>, <span class="st">"CH0002"</span><span class="op">)</span>, salt <span class="op">=</span> <span class="va">salt</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/hash_identifier.html">hash_identifier</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"CH0001"</span>, <span class="st">"CH0002"</span><span class="op">)</span>, salt <span class="op">=</span> <span class="va">salt</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "ABFE660E28E9" "C40EC41A988F"</span></span></code></pre></div>
 <p>Deterministic given the salt:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span></span>
-<span>  <span class="fu">hash_identifier</span><span class="op">(</span><span class="st">"CH0001"</span>, salt <span class="op">=</span> <span class="va">salt</span><span class="op">)</span>,</span>
-<span>  <span class="fu">hash_identifier</span><span class="op">(</span><span class="st">"CH0001"</span>, salt <span class="op">=</span> <span class="va">salt</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="../reference/hash_identifier.html">hash_identifier</a></span><span class="op">(</span><span class="st">"CH0001"</span>, salt <span class="op">=</span> <span class="va">salt</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="../reference/hash_identifier.html">hash_identifier</a></span><span class="op">(</span><span class="st">"CH0001"</span>, salt <span class="op">=</span> <span class="va">salt</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 <p>A namespace separates uses of the same identifier, so a child
 identifier hashed for the coverage file and for the serology file cannot
 be cross-walked by someone holding only one of them:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">hash_identifier</span><span class="op">(</span><span class="st">"CH0001"</span>, salt <span class="op">=</span> <span class="va">salt</span>, namespace <span class="op">=</span> <span class="st">"coverage"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/hash_identifier.html">hash_identifier</a></span><span class="op">(</span><span class="st">"CH0001"</span>, salt <span class="op">=</span> <span class="va">salt</span>, namespace <span class="op">=</span> <span class="st">"coverage"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "2D6D0C095EDB"</span></span>
-<span><span class="fu">hash_identifier</span><span class="op">(</span><span class="st">"CH0001"</span>, salt <span class="op">=</span> <span class="va">salt</span>, namespace <span class="op">=</span> <span class="st">"serology"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/hash_identifier.html">hash_identifier</a></span><span class="op">(</span><span class="st">"CH0001"</span>, salt <span class="op">=</span> <span class="va">salt</span>, namespace <span class="op">=</span> <span class="st">"serology"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "881FABFFB37D"</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -196,18 +196,18 @@ a coordinate pair plus an administrative unit identifies a dwelling.</p>
 <span><span class="co">#&gt; [21] "n_eligible"     "telephone"      "address"</span></span></code></pre></div>
 <p>Drop coordinates outright:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">d1</span> <span class="op">&lt;-</span> <span class="fu">generalize_geography</span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">d1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/generalize_geography.html">generalize_geography</a></span><span class="op">(</span><span class="va">vcs_example</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">vcs_example</span><span class="op">$</span><span class="va">households</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">d1</span><span class="op">$</span><span class="va">households</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "gps_lat"      "gps_lon"      "gps_accuracy"</span></span></code></pre></div>
 <p>Or coarsen them, if within-cluster geometry matters to the analysis.
 Two decimal places is roughly a kilometre:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">d2</span> <span class="op">&lt;-</span> <span class="fu">generalize_geography</span><span class="op">(</span><span class="va">vcs_example</span>, round_gps <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">d2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/generalize_geography.html">generalize_geography</a></span><span class="op">(</span><span class="va">vcs_example</span>, round_gps <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">d2</span><span class="op">$</span><span class="va">households</span><span class="op">$</span><span class="va">gps_lat</span>, <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] -5.89 -5.88 -5.89</span></span></code></pre></div>
 <p>Truncate the administrative hierarchy, and suppress small cells:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">d3</span> <span class="op">&lt;-</span> <span class="fu">generalize_geography</span><span class="op">(</span><span class="va">vcs_example</span>, lowest_level <span class="op">=</span> <span class="st">"district"</span>, min_cell <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">d3</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/generalize_geography.html">generalize_geography</a></span><span class="op">(</span><span class="va">vcs_example</span>, lowest_level <span class="op">=</span> <span class="st">"district"</span>, min_cell <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">intersect</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"province"</span>, <span class="st">"district"</span>, <span class="st">"health_zone"</span>, <span class="st">"health_area"</span><span class="op">)</span>,</span>
 <span>          <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">d3</span><span class="op">$</span><span class="va">households</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "province" "district"</span></span></code></pre></div>
@@ -218,7 +218,7 @@ Two decimal places is roughly a kilometre:</p>
 <p>An exact date of birth is a quasi-identifier. Banding replaces
 it:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">d4</span> <span class="op">&lt;-</span> <span class="fu">generalize_age</span><span class="op">(</span><span class="va">vcs_example</span>, breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">12</span>, <span class="fl">18</span>, <span class="fl">24</span>, <span class="cn">Inf</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">d4</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/generalize_age.html">generalize_age</a></span><span class="op">(</span><span class="va">vcs_example</span>, breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">12</span>, <span class="fl">18</span>, <span class="fl">24</span>, <span class="cn">Inf</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">d4</span><span class="op">$</span><span class="va">children</span><span class="op">$</span><span class="va">age_band</span>, useNA <span class="op">=</span> <span class="st">"ifany"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;   [0,12)  [12,18)  [18,24) [24,Inf] </span></span>
@@ -272,7 +272,7 @@ reproduce the shift and nobody else can recover it.</p>
 <h2 id="the-whole-pipeline">The whole pipeline<a class="anchor" aria-label="anchor" href="#the-whole-pipeline"></a>
 </h2>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">anon</span> <span class="op">&lt;-</span> <span class="fu">deidentify_vcs</span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">anon</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/deidentify_vcs.html">deidentify_vcs</a></span><span class="op">(</span></span>
 <span>  <span class="va">vcs_example</span>,</span>
 <span>  remove     <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"child_name"</span>, <span class="st">"caregiver_name"</span>, <span class="st">"telephone"</span>, <span class="st">"address"</span><span class="op">)</span>,</span>
 <span>  hash       <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"child_id"</span>, <span class="st">"household_id"</span><span class="op">)</span>,</span>
@@ -299,7 +299,7 @@ link:</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="va">anon</span><span class="op">$</span><span class="va">vaccinations</span><span class="op">$</span><span class="va">child_id</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">anon</span><span class="op">$</span><span class="va">children</span><span class="op">$</span><span class="va">child_id</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">estimate_coverage</span><span class="op">(</span><span class="fu">vcs_design</span><span class="op">(</span><span class="fu">derive_vaccination_status</span><span class="op">(</span><span class="va">anon</span><span class="op">)</span><span class="op">)</span>,</span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/estimate_coverage.html">estimate_coverage</a></span><span class="op">(</span><span class="fu">vcs_design</span><span class="op">(</span><span class="fu"><a href="../reference/derive_vaccination_status.html">derive_vaccination_status</a></span><span class="op">(</span><span class="va">anon</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>                  vaccines <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BCG"</span>, <span class="st">"PENTA3"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;vcs_estimate: 2 row(s)&gt;</span></span>
 <span><span class="co">#&gt;   evidence : card_or_recall</span></span>
@@ -330,7 +330,7 @@ that could be singled out by someone with background knowledge.</p>
 <p>Coarsening geography raises k:</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/assess_reidentification_risk.html">assess_reidentification_risk</a></span><span class="op">(</span></span>
-<span>  <span class="fu">generalize_geography</span><span class="op">(</span><span class="va">vcs_example</span>, lowest_level <span class="op">=</span> <span class="st">"province"</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="../reference/generalize_geography.html">generalize_geography</a></span><span class="op">(</span><span class="va">vcs_example</span>, lowest_level <span class="op">=</span> <span class="st">"province"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;vcs_risk: k-anonymity screening&gt;</span></span>
 <span><span class="co">#&gt;   quasi-identifiers: province, residence, stratum, sex</span></span>
@@ -352,7 +352,7 @@ hiding in free text. Read those fields before release.</p>
 import, which still contains every identifier.</li>
 <li>Export the cleaning log with <code>exclude_variables</code> set for
 anything sensitive.</li>
-<li>Re-run <code>identify_pii()</code> on the file you are about to
+<li>Re-run <code><a href="../reference/identify_pii.html">identify_pii()</a></code> on the file you are about to
 send, not on the one you started from.</li>
 <li>Keep the salt, the identifier crosswalk and the GPS offsets in a
 restricted location, separate from the shareable file.</li>

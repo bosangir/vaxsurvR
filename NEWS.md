@@ -1,3 +1,40 @@
+# vaxsurvR 0.2.1
+
+## Mapping data collection
+
+Fieldwork progress is now reportable at any level of the administrative
+hierarchy, not just at the sampling unit.
+
+* `read_psu_frame()` carries the whole hierarchy through `adm_cols`
+  (`adm0`--`adm3` by default, and any subset of them), and reads GeoJSON,
+  shapefile and GeoPackage frames as well as Excel and CSV, taking centroids
+  from the polygons when the file has no centroid columns. `zone` is unchanged,
+  so existing code keeps working.
+* `admin_map_data()` aggregates `psu_map_data()` to any level -- national,
+  province, district, health zone -- keeping units where nothing has been
+  collected, because an omitted unit looks like one that does not exist. It
+  joins an indicator table (an `estimate_*()` result, say) on request.
+* `plot_admin_map()` draws the choropleth: units filled by any metric, labelled
+  with the value and its denominator, units with no data drawn flat as "no
+  data", small denominators outlined rather than hidden, and sampling units
+  optionally bubbled on top for hotspot maps. The table actually drawn is
+  attached as the `"vcs_map_data"` attribute.
+* `plot_admin_progress_bars()` is the non-spatial companion, for reports with
+  no boundary file.
+* `read_admin_boundaries()` standardises any boundary layer to a `name` column,
+  guessing the name column from the units it has to match.
+* `dissolve_frame_boundaries()` derives boundaries from the frame when no
+  boundary file exists: `method = "union"` for the truthful sampled footprint,
+  `method = "hull"` for one legible shape per unit. Neither is an
+  administrative border and the function says so.
+* The report template gained a *Where data were collected* section driven by
+  the new `psu_frame_file`, `psu_backup_file`, `boundary_file`,
+  `boundary_name_col` and `map_levels` parameters. It is skipped when no frame
+  is supplied.
+* New example data `vcs_example_frame_raw`: 45 sampling units of which 15 were
+  never opened, in five zones where nothing was collected, so "no data yet" is
+  a real category in the examples.
+
 # vaxsurvR 0.2.0
 
 ## Report-grade indicators (VCQI conventions)
@@ -52,7 +89,7 @@ country, schedule or questionnaire assumption in the core functions.
 * `render_coverage_report()` renders a complete Word report -- executive
   summary, methods, every table and figure above, annexes -- from a wide
   export, styled with `inst/templates/vcs_reference.docx` (green headings,
-  Century Gothic). `use_coverage_report()` copies the parameterised
+  Arial). `use_coverage_report()` copies the parameterised
   R Markdown template for editing; `coverage_report_template()` locates it;
   `update_docx_fields()` fills the table of contents on Windows.
 * `vcs_palette()`, `vcs_font()`, `theme_vcs()`, `ft_vcs()` and

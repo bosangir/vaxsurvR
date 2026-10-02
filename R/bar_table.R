@@ -267,19 +267,24 @@ bar_table_size <- function(p) {
 #' @inheritParams plot_bar_table
 #' @param palette A [vcs_palette()].
 #' @param font_size Body font size in points.
+#' @param total_width Table width in inches (the text width of the page).
+#' @param label_width Width of the row-label column in inches; the measure
+#'   columns share the remainder.
 #' @return A `flextable`.
 #' @export
 #' @seealso [plot_bar_table()]
 ft_bar_table <- function(data, measures, suppress_n = 25, caution_n = 50,
-                         notes = NULL, palette = vcs_palette(), font_size = 8.5) {
+                         notes = NULL, palette = vcs_palette(), font_size = 8.5,
+                         total_width = getOption("vaxsurvR.table_width", 6.7), label_width = 1.7) {
   assert_installed(c("flextable", "officer"), "ft_bar_table()")
   if (inherits(measures, "vcs_measure")) measures <- list(measures)
   rows <- bar_table_rows(data)
   rows <- rows[rows$row_type != "spacer", , drop = FALSE]
   n_row <- nrow(rows)
-  label <- ifelse(rows$indent > 0, paste0(strrep(" ", 4 * rows$indent), rows$stratum),
-                  rows$stratum)
-  out <- data.frame(stratum = label, stringsAsFactors = FALSE)
+  # Nested rows are indented with cell padding, applied below. Padding
+  # survives the trip into Word, whereas a leading non-breaking space is
+  # written in a form Word renders literally.
+  out <- data.frame(stratum = rows$stratum, stringsAsFactors = FALSE)
   keys <- character(0)
   hdr <- list(stratum = "")
   bars <- list()
@@ -305,7 +310,7 @@ ft_bar_table <- function(data, measures, suppress_n = 25, caution_n = 50,
   }
   ft <- flextable::flextable(out)
   ft <- flextable::set_header_labels(ft, values = hdr)
-  fam <- getOption("vaxsurvR.font", "Century Gothic")
+  fam <- getOption("vaxsurvR.font", "Arial")
   ft <- flextable::font(ft, fontname = fam, part = "all")
   ft <- flextable::fontsize(ft, size = font_size, part = "all")
   ft <- flextable::bg(ft, bg = "#F2F2F2", part = "header")
@@ -315,18 +320,10 @@ ft_bar_table <- function(data, measures, suppress_n = 25, caution_n = 50,
   ft <- flextable::valign(ft, valign = "bottom", part = "header")
   for (vk in names(bars)) {
     if (!bars[[vk]]$on) next
-    for (r in seq_len(n_row)) {
-      sh <- bars[[vk]]$share[r]
-      if (is.na(sh) || sh <= 0) next
-      ft <- flextable::compose(
-        ft, i = r, j = vk,
-        value = flextable::as_paragraph(
-          flextable::minibar(value = sh, max = 1, barcol = palette$bar_fill,
-                             bg = "transparent", width = 0.45, height = 0.12),
-          " ", out[[vk]][r]
-        )
-      )
-    }
+    sh <- bars[[vk]]$share
+    sh[is.na(sh) | sh <= 0] <- NA
+    ft <- ft_shade_cells(ft, sh, vk, palette$bar_fill, text = out[[vk]],
+                         font_size = font_size - 1)
   }
   hdr_rows <- which(rows$row_type == "header")
   if (length(hdr_rows)) {
@@ -337,8 +334,11 @@ ft_bar_table <- function(data, measures, suppress_n = 25, caution_n = 50,
   if (length(ov)) ft <- flextable::bold(ft, i = ov)
   par_rows <- which(rows$row_type == "parent")
   if (length(par_rows)) ft <- flextable::bold(ft, i = par_rows, j = "stratum")
-  it <- which(rows$indent > 0)
-  if (length(it)) ft <- flextable::italic(ft, i = it, j = "stratum")
+  for (lv in sort(unique(rows$indent[rows$indent > 0]))) {
+    i_lv <- which(rows$indent == lv)
+    ft <- flextable::italic(ft, i = i_lv, j = "stratum")
+    ft <- flextable::padding(ft, i = i_lv, j = "stratum", padding.left = 3 + 9 * lv)
+  }
   ft <- flextable::border_remove(ft)
   thin <- officer::fp_border(color = palette$grey_lt, width = 0.5)
   ft <- flextable::border_inner_h(ft, border = thin, part = "body")
@@ -348,6 +348,10 @@ ft_bar_table <- function(data, measures, suppress_n = 25, caution_n = 50,
   block_first <- vapply(seq_along(measures), function(i) sprintf("v%d", i), character(1))
   ft <- flextable::border(ft, j = block_first, border.left = officer::fp_border(color = palette$grey, width = 0.5), part = "all")
   ft <- flextable::padding(ft, padding.top = 1.5, padding.bottom = 1.5, part = "all")
+  for (lv in sort(unique(rows$indent[rows$indent > 0]))) {
+    ft <- flextable::padding(ft, i = which(rows$indent == lv), j = "stratum",
+                             padding.left = 3 + 9 * lv, part = "body")
+  }
   if (is.null(notes)) {
     notes <- c(
       "Table cells are shaded in proportion to the outcome; an outcome of 100% would fill the cell with colour.",
@@ -361,7 +365,13 @@ ft_bar_table <- function(data, measures, suppress_n = 25, caution_n = 50,
     ft <- flextable::color(ft, color = palette$grey_dk, part = "footer")
   }
   if (n_row <= 30L) ft <- flextable::keep_with_next(ft, part = "all")
-  ft <- flextable::autofit(ft)
-  ft <- flextable::width(ft, j = "stratum", width = 1.9)
-  ft
+  # Fit the page: the label column takes `label_width`, outcome cells get
+  # twice the width of sample-size cells, and everything sums to total_width.
+  vk <- grep("^v", keys, value = TRUE)
+  nk <- grep("^n", keys, value = TRUE)
+  unit <- (total_width - label_width) / (2 * length(vk) + length(nk))
+  ft <- flextable::width(ft, j = "stratum", width = label_width)
+  ft <- flextable::width(ft, j = vk, width = 2 * unit)
+  if (length(nk)) ft <- flextable::width(ft, j = nk, width = unit)
+  flextable::set_table_properties(ft, layout = "fixed", align = "left")
 }

@@ -2,11 +2,15 @@
 # (Settings → Pages → Source: GitHub Actions)
 name: pkgdown
 
+# Publishing a release runs the workflow against the tag, and the github-pages
+# environment only accepts deployments from the default branch, so a release
+# build always succeeded and then failed at the deploy step. Pushing to main
+# already republishes the site, so the release trigger added nothing but a red
+# cross. To publish from tags instead, allow them under
+# Settings -> Environments -> github-pages -> deployment branches and tags.
 on:
   push:
     branches: [main]
-  release:
-    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -20,7 +24,9 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # Pinned rather than ubuntu-latest: that label moves to Ubuntu 26 on
+    # 19 October 2026, and the runner image should change when we choose it.
+    runs-on: ubuntu-24.04
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     steps:
@@ -42,7 +48,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

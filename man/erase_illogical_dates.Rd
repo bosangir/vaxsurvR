@@ -18,8 +18,10 @@ nothing is flagged or this many passes have been made.}
 \value{
 \code{x} with offending \code{card_date} set to \code{NA} and
 \code{card_date_precision} set to \code{"tick"}. \code{x$meta$date_quality} holds the
-before-review counts with an \code{n_dates_after} column, and
-\code{x$meta$date_erasures} the audit log of every erased date.
+counts of what was erased, summed over every pass, with the first-pass
+counts kept in \code{n_dates_first_pass} and the post-cleaning check in
+\code{n_dates_after}; \code{x$meta$date_erasures} is the audit log of every erased
+date.
 }
 \description{
 The VCQI convention: a dated dose whose date fails a logical check keeps

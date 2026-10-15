@@ -138,15 +138,22 @@ table_dose_intervals <- function(x, by = NULL, antigen = NULL, short_days = 28,
 #' @param vaccines Doses to include; defaults to the schedule.
 #' @param subset Optional logical expression on the child-level table.
 #' @param max_age Upper age in days; defaults to the oldest observed.
+#' @param denominator `"all"` (the default, and the VCQI RI_CCC convention)
+#'   puts every eligible child in the denominator. `"dated_card"` restricts it
+#'   to children with at least one usable card date, which lifts every curve
+#'   by the same factor.
 #' @return A tibble of class `vcs_ccc` with `vaccine`, `antigen`, `dose`,
-#'   `age_days`, `cum_pct`, and attributes `n_children`, `n_with_dates`.
+#'   `age_days`, `cum_pct`, and attributes `n_children`, `n_with_dates`,
+#'   `denominator`.
 #' @export
 #' @seealso [plot_ccc()]
 #' @examples
 #' cc <- compute_ccc(vcs_example, vaccines = c("BCG", "PENTA1", "PENTA3"))
 #' head(cc)
-compute_ccc <- function(x, vaccines = NULL, subset = NULL, max_age = NULL) {
+compute_ccc <- function(x, vaccines = NULL, subset = NULL, max_age = NULL,
+                        denominator = c("all", "dated_card")) {
   assert_vcs_data(x)
+  denominator <- match.arg(denominator)
   sched <- x$schedule
   vaccines <- vaccines %||% intersect(sched$vaccine, unique(x$vaccinations$vaccine))
   ch <- vcs_children(x)
@@ -156,9 +163,6 @@ compute_ccc <- function(x, vaccines = NULL, subset = NULL, max_age = NULL) {
     keep[is.na(keep)] <- FALSE
     ch <- ch[keep, , drop = FALSE]
   }
-  w <- child_weights(ch)
-  w[is.na(w)] <- 0
-  total_w <- sum(w)
   vx <- vx_with_dates(x)
   vx <- vx[vx$child_id %in% ch$child_id & vx$vaccine %in% vaccines, , drop = FALSE]
   prec <- vx$card_date_precision %||% rep("day", nrow(vx))
@@ -166,7 +170,20 @@ compute_ccc <- function(x, vaccines = NULL, subset = NULL, max_age = NULL) {
   ok <- !is.na(age) & age >= 0 & (is.na(prec) | prec %in% c("day", "complete"))
   vx <- vx[ok, , drop = FALSE]
   age <- age[ok]
+  ## "all" is the VCQI RI_CCC convention: every eligible child is in the
+  ## denominator, so a curve plateaus at the card-dated coverage of the whole
+  ## sample. "dated_card" restricts the denominator to children with at least
+  ## one usable card date, which lifts every curve by the same factor and
+  ## answers a different question. The choice is recorded so that the plot can
+  ## state the denominator actually used instead of assuming one.
+  if (denominator == "dated_card") {
+    ch <- ch[ch$child_id %in% unique(vx$child_id), , drop = FALSE]
+  }
+  w <- child_weights(ch)
+  w[is.na(w)] <- 0
+  total_w <- sum(w)
   wv <- w[match(vx$child_id, ch$child_id)]
+  wv[is.na(wv)] <- 0
   max_age <- max_age %||% (if (length(age)) max(age) else 730)
   grid <- seq(0, max_age, by = 1)
   rows <- lapply(vaccines, function(v) {
@@ -184,9 +201,25 @@ compute_ccc <- function(x, vaccines = NULL, subset = NULL, max_age = NULL) {
   n_dates <- length(unique(vx$child_id))
   attr(out, "n_children") <- nrow(ch)
   attr(out, "n_with_dates") <- n_dates
+  attr(out, "denominator") <- denominator
   attr(out, "schedule") <- sched
   class(out) <- c("vcs_ccc", class(out))
   out
+}
+
+#' Sentence stating the denominator a set of curves was computed on
+#' @noRd
+ccc_denominator_note <- function(x) {
+  n_ch <- attr(x, "n_children")
+  n_dt <- attr(x, "n_with_dates")
+  den <- attr(x, "denominator") %||% "all"
+  if (identical(den, "dated_card")) {
+    sprintf(paste("Denominator is the %s respondents with at least one dated card record,",
+                  "not all eligible respondents."), format(n_ch, big.mark = ","))
+  } else {
+    sprintf("Denominator is all %s eligible respondents, of whom %s had card records with dates.",
+            format(n_ch, big.mark = ","), format(n_dt, big.mark = ","))
+  }
 }
 
 #' Plot cumulative coverage curves
@@ -234,10 +267,8 @@ plot_ccc <- function(x, title = "Cumulative coverage by age", subtitle = NULL,
     ggplot2::labs(x = "Age (days)", y = "Cumulative weighted % vaccinated\n(according to card)",
                   title = title, subtitle = subtitle,
                   caption = sprintf(
-                    "Vertical dashed lines mark scheduled vaccination ages: %s days.\nDenominator is all eligible respondents. %s of %s respondents had card records with dates.",
-                    paste(mark_ages, collapse = ", "),
-                    format(attr(x, "n_with_dates"), big.mark = ","),
-                    format(attr(x, "n_children"), big.mark = ","))) +
+                    "Vertical dashed lines mark scheduled vaccination ages: %s days.\n%s",
+                    paste(mark_ages, collapse = ", "), ccc_denominator_note(x))) +
     theme_vcs(palette = palette, grid = "xy") +
     ggplot2::theme(legend.position = "bottom", legend.box = "vertical",
                    axis.text.x = ggplot2::element_text(size = 8))

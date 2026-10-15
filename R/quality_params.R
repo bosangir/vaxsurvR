@@ -100,8 +100,10 @@ date_quality_summary <- function(x, min_age_months = 12, max_age_months = 23,
 #' @param ... Passed to [date_quality_summary()].
 #' @return `x` with offending `card_date` set to `NA` and
 #'   `card_date_precision` set to `"tick"`. `x$meta$date_quality` holds the
-#'   before-review counts with an `n_dates_after` column, and
-#'   `x$meta$date_erasures` the audit log of every erased date.
+#'   counts of what was erased, summed over every pass, with the first-pass
+#'   counts kept in `n_dates_first_pass` and the post-cleaning check in
+#'   `n_dates_after`; `x$meta$date_erasures` is the audit log of every erased
+#'   date.
 #' @export
 #' @examples
 #' d <- erase_illogical_dates(vcs_example)
@@ -110,10 +112,16 @@ erase_illogical_dates <- function(x, max_passes = 5L, ...) {
   assert_vcs_data(x)
   first <- date_quality_summary(x, ...)
   logs <- list()
+  ## Counts are accumulated over every pass, not taken from the first one.
+  ## Erasing a date exposes new problems further down a series, so the first
+  ## pass understates what the cleaning actually removes; a date erased in
+  ## pass 2 is no longer dated in pass 3, so passes cannot count it twice.
+  totals <- first$n_dates
   for (pass in seq_len(max_passes)) {
     summ <- if (pass == 1L) first else date_quality_summary(x, ...)
     flag <- attr(summ, "flag")
     if (is.null(flag) || !any(flag)) break
+    if (pass > 1L) totals <- totals + summ$n_dates
     vx <- x$vaccinations
     changed <- vx[flag, , drop = FALSE]
     if (!"card_date_raw" %in% names(vx)) vx$card_date_raw <- as.character(vx$card_date)
@@ -132,6 +140,14 @@ erase_illogical_dates <- function(x, max_passes = 5L, ...) {
   }
   log <- dplyr::bind_rows(logs)
   after <- date_quality_summary(x, ...)
+  first$n_dates_first_pass <- first$n_dates
+  first$n_dates <- totals
+  ## The last row counts distinct dates erased, which is the length of the
+  ## audit log, rather than the sum of the per-rule rows: one date can fail
+  ## more than one rule in the same pass.
+  first$n_dates[nrow(first)] <- nrow(log)
+  n_total <- attr(first, "n_dates_total")
+  first$prop_of_dates <- if (!is.null(n_total) && n_total > 0) first$n_dates / n_total else NA_real_
   first$n_dates_after <- after$n_dates
   first$n_erased_total <- c(rep(NA_integer_, nrow(first) - 1L), nrow(log))
   x$meta$date_erasures <- log
@@ -167,7 +183,7 @@ sample_size_parameters <- function(design, vaccine, assumed = NULL, prefix = "co
   cv <- if (isTRUE(design$spec$weighted) && sum(!is.na(w)) > 1) stats::sd(w, na.rm = TRUE) / mean(w, na.rm = TRUE) else NA_real_
   assumed <- assumed %||% list()
   tibble::tibble(
-    parameter = c(sprintf("%s coverage", vaccine), "Average number of respondents per cluster",
+    parameter = c(sprintf("%s coverage", vaccine), "Average number of respondents per PSU",
                   sprintf("Intracluster correlation coefficient for %s", vaccine),
                   "Coefficient of variation of survey weights", "Design effect", "Effective sample size"),
     assumed = c(assumed$coverage %||% NA_real_, assumed$per_cluster %||% NA_real_,

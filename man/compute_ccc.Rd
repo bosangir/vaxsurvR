@@ -4,7 +4,13 @@
 \alias{compute_ccc}
 \title{Cumulative coverage curves by age}
 \usage{
-compute_ccc(x, vaccines = NULL, subset = NULL, max_age = NULL)
+compute_ccc(
+  x,
+  vaccines = NULL,
+  subset = NULL,
+  max_age = NULL,
+  denominator = c("all", "dated_card")
+)
 }
 \arguments{
 \item{x}{A \link[=new_vcs_data]{vcs_data} object.}
@@ -14,10 +20,16 @@ compute_ccc(x, vaccines = NULL, subset = NULL, max_age = NULL)
 \item{subset}{Optional logical expression on the child-level table.}
 
 \item{max_age}{Upper age in days; defaults to the oldest observed.}
+
+\item{denominator}{\code{"all"} (the default, and the VCQI RI_CCC convention)
+puts every eligible child in the denominator. \code{"dated_card"} restricts it
+to children with at least one usable card date, which lifts every curve
+by the same factor.}
 }
 \value{
 A tibble of class \code{vcs_ccc} with \code{vaccine}, \code{antigen}, \code{dose},
-\code{age_days}, \code{cum_pct}, and attributes \code{n_children}, \code{n_with_dates}.
+\code{age_days}, \code{cum_pct}, and attributes \code{n_children}, \code{n_with_dates},
+\code{denominator}.
 }
 \description{
 For each dose, the weighted percentage of all children known -- from a

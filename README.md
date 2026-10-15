@@ -1,4 +1,11 @@
-# vaxsurvR <img src="man/figures/logo.png" align="right" height="139" alt="vaxsurvR logo" />
+<div align="center">
+
+<img src="man/figures/logo.png" alt="vaxsurvR" width="200" />
+
+# vaxsurvR
+
+**Management, quality assurance, de-identification and analysis of vaccination
+coverage surveys.**
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/bosangir/vaxsurvR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/bosangir/vaxsurvR/actions/workflows/R-CMD-check.yaml)
@@ -12,8 +19,7 @@
 ![Privacy](https://img.shields.io/badge/Privacy-De--identification-C12C12?style=flat&logo=shieldsdotio&logoColor=white&labelColor=4E4E4E)
 ![LaTeX](https://img.shields.io/badge/LaTeX-Scientific%20Writing-128585?style=flat&logo=latex&logoColor=white&labelColor=4E4E4E)
 
-**Management, quality assurance, de-identification and analysis of vaccination
-coverage surveys.**
+</div>
 
 `vaxsurvR` takes a raw household survey export and carries it, reproducibly, to
 validated, de-identified, analysis-ready data and design-based coverage

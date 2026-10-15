@@ -345,6 +345,7 @@ vcs_example_dictionary <- vcs_dictionary(
   n_caregivers = CG_MAX, n_children = CH_MAX
 )
 
+# mapping variables
 vcs_example <- map_vcs_variables(
   vcs_example_raw, vcs_example_dictionary, vcs_example_schedule,
   keep_raw = FALSE

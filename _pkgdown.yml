@@ -47,6 +47,14 @@ articles:
       - end-to-end
 
 reference:
+  - title: The pipeline
+    desc: >
+      The workflow as a table; plot_vcs_pipeline() draws it and is listed under
+      Figures and maps. The rendered guide is at
+      inst/pipeline/vaxsurvR-pipeline.pdf.
+    contents:
+      - vcs_pipeline
+
   - title: Describe the survey
     desc: Schedules, dictionaries, recall maps and strata — set up once per survey.
     contents:

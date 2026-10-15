@@ -59,13 +59,13 @@ test_that("plot_vcs_pipeline() rejects a malformed pipeline", {
                class = "vaxsurvR_missing_variable")
 })
 
-test_that("the diagram writes to PDF without font warnings", {
+test_that("the diagram renders on the base pdf device without font warnings", {
   skip_if_not_installed("ggplot2")
+  # The device R CMD check runs examples on. vcs_font() only sees the device
+  # that is already open, so the font has to be resolved with it open --
+  # exactly as check does it -- rather than by letting ggsave() open one later.
   f <- withr::local_tempfile(fileext = ".pdf")
-  expect_silent(
-    ggplot2::ggsave(f, plot_vcs_pipeline(), width = 10, height = 6,
-                    device = grDevices::cairo_pdf)
-  )
-  expect_true(file.exists(f))
-  expect_gt(file.size(f), 1000)
+  grDevices::pdf(f)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  expect_silent(print(plot_vcs_pipeline()))
 })

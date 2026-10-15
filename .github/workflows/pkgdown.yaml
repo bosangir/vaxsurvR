@@ -1,4 +1,4 @@
-# Neudata · build the pkgdown site and publish it with GitHub Pages
+# Build the pkgdown site and publish it with GitHub Pages
 # (Settings → Pages → Source: GitHub Actions)
 name: pkgdown
 

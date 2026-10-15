@@ -13,9 +13,9 @@ A reproducible, country-independent toolkit for household vaccination coverage s
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://neu-data.github.io/vaxsurvR/}
-  \item \url{https://github.com/neu-data/vaxsurvR}
-  \item Report bugs at \url{https://github.com/neu-data/vaxsurvR/issues}
+  \item \url{https://bosangir.github.io/vaxsurvR/}
+  \item \url{https://github.com/bosangir/vaxsurvR}
+  \item Report bugs at \url{https://github.com/bosangir/vaxsurvR/issues}
 }
 
 }

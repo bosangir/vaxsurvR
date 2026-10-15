@@ -1,13 +1,17 @@
-// Neudata pkgdown styles
+// vaxsurvR pkgdown styles
+//
+// Colours are the author's badge palette -- a deep blue for structure, a teal
+// accent and a charcoal label grey -- so the documentation site matches the
+// rest of the work.
 
-$neudata-teal: #055F56;
-$neudata-blue: #0B376C;
-$neudata-navy: #04242F;
-$neudata-mist: #EAF2F5;
+$vx-teal: #128585;
+$vx-blue: #11619E;
+$vx-navy: #0B3D63;
+$vx-mist: #EDF3F8;
 
 .navbar {
-  background-color: $neudata-navy !important;
-  border-bottom: 4px solid $neudata-teal;
+  background-color: $vx-navy !important;
+  border-bottom: 4px solid $vx-teal;
 }
 
 .navbar-brand {
@@ -19,13 +23,13 @@ h1, .h1 {
 }
 
 h2, .h2 {
-  border-bottom: 2px solid $neudata-teal;
+  border-bottom: 2px solid $vx-teal;
   padding-bottom: 0.25rem;
   margin-top: 2rem;
 }
 
 h3, .h3 {
-  color: $neudata-blue;
+  color: $vx-blue;
 }
 
 // Package logo on the home page
@@ -37,22 +41,22 @@ img.logo {
 
 // Reference index section headers
 .template-reference-index h2 {
-  color: $neudata-navy;
+  color: $vx-navy;
 }
 
 // Code blocks
 pre {
-  background-color: $neudata-mist;
-  border-left: 4px solid $neudata-teal;
+  background-color: $vx-mist;
+  border-left: 4px solid $vx-teal;
 }
 
 footer {
-  border-top: 4px solid $neudata-teal;
-  background: $neudata-navy;
+  border-top: 4px solid $vx-teal;
+  background: $vx-navy;
   color: #fff;
   padding: 1rem 1.5rem;
 
   a {
-    color: #9FD3CB;
+    color: #9FD6D6;
   }
 }

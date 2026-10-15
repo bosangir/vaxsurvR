@@ -1,17 +1,16 @@
-<div align="center">
-
-<img src="https://raw.githubusercontent.com/neu-data/.github/main/assets/banner.svg" alt="Neudata Consulting Ltd" width="100%" />
-
-</div>
-
 # vaxsurvR <img src="man/figures/logo.png" align="right" height="139" alt="vaxsurvR logo" />
 
 <!-- badges: start -->
-[![R-CMD-check](https://github.com/neu-data/vaxsurvR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/neu-data/vaxsurvR/actions/workflows/R-CMD-check.yaml)
-[![pkgdown](https://img.shields.io/badge/docs-pkgdown-055F56?style=flat)](https://neu-data.github.io/vaxsurvR/)
-[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-0B376C.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-![Neudata](https://img.shields.io/badge/Neudata-R%20package-04242F?style=flat)
+[![R-CMD-check](https://github.com/bosangir/vaxsurvR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/bosangir/vaxsurvR/actions/workflows/R-CMD-check.yaml)
+[![pkgdown](https://img.shields.io/badge/docs-pkgdown-11619E?style=flat&labelColor=4E4E4E)](https://bosangir.github.io/vaxsurvR/)
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-C12C12?style=flat&labelColor=4E4E4E)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
+
+![R](https://img.shields.io/badge/R-Statistical%20Computing-11619E?style=flat&logo=r&logoColor=white&labelColor=4E4E4E)
+![Survey](https://img.shields.io/badge/survey-Complex%20Designs-11619E?style=flat&logo=r&logoColor=white&labelColor=4E4E4E)
+![Immunisation](https://img.shields.io/badge/EPI-Coverage%20Surveys-128585?style=flat&logo=worldhealthorganization&logoColor=white&labelColor=4E4E4E)
+![Privacy](https://img.shields.io/badge/Privacy-De--identification-C12C12?style=flat&logo=shieldsdotio&logoColor=white&labelColor=4E4E4E)
+![LaTeX](https://img.shields.io/badge/LaTeX-Scientific%20Writing-128585?style=flat&logo=latex&logoColor=white&labelColor=4E4E4E)
 
 **Management, quality assurance, de-identification and analysis of vaccination
 coverage surveys.**
@@ -25,7 +24,7 @@ or administrative hierarchy is hard-coded.
 
 ```r
 # install.packages("remotes")
-remotes::install_github("neu-data/vaxsurvR")
+remotes::install_github("bosangir/vaxsurvR")
 ```
 
 ## The pipeline
@@ -247,7 +246,6 @@ MIT © vaxsurvR authors.
 
 <div align="center">
 
-Developed and maintained by **[Neudata Consulting Ltd](https://www.neu-data.com)** · *Insight. Impact. Innovation.*
-[www.neu-data.com](https://www.neu-data.com) · [contact@neu-data.com](mailto:contact@neu-data.com)
+Developed and maintained by **[Bernard Isekah Osang'ir](https://github.com/bosangir)**
 
 </div>

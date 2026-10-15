@@ -1,4 +1,4 @@
-# Neudata issue labels — synced automatically by .github/workflows/sync-labels.yml
+# Issue labels — synced automatically by .github/workflows/sync-labels.yml
 - name: "type: bug"
   color: "B60205"
   description: "Something in code, pipeline, app or report is not working"

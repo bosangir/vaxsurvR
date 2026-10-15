@@ -1,13 +1,13 @@
-url: https://neu-data.github.io/vaxsurvR/
+url: https://bosangir.github.io/vaxsurvR/
 
 template:
   bootstrap: 5
   bslib:
-    primary: "#055F56"
-    secondary: "#0B376C"
-    navbar-bg: "#04242F"
-    link-color: "#0B376C"
-    headings-color: "#04242F"
+    primary: "#11619E"
+    secondary: "#128585"
+    navbar-bg: "#0B3D63"
+    link-color: "#11619E"
+    headings-color: "#0B3D63"
     base_font: {google: "Source Sans 3"}
     heading_font: {google: "Source Sans 3"}
     code_font: {google: "JetBrains Mono"}
@@ -17,19 +17,11 @@ navbar:
   type: dark
   structure:
     left: [intro, reference, articles, news]
-    right: [search, neudata, github]
-  components:
-    neudata:
-      icon: fa-globe
-      href: https://www.neu-data.com
-      aria-label: Neudata website
-
+    right: [search, github]
 footer:
   structure:
-    left: neudata
+    left: developed_by
     right: built_with
-  components:
-    neudata: "Developed by [**Neudata Consulting Ltd**](https://www.neu-data.com) · *Insight. Impact. Innovation.*"
 
 home:
   sidebar:

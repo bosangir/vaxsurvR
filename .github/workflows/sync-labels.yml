@@ -1,4 +1,4 @@
-# Creates / updates the Neudata issue labels defined in .github/labels.yml
+# Creates / updates the issue labels defined in .github/labels.yml
 name: Sync labels
 
 on:

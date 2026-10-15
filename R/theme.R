@@ -2,8 +2,8 @@
 # Visual identity for report output: a palette, a ggplot2 theme and a
 # flextable theme. Everything here is cosmetic; no estimate depends on it.
 #
-# The default identity colours follow the Neudata Consulting Ltd brand (teal
-# headings, navy and blue accents, grey rules, Arial where available). Colours
+# The default identity colours are taken from the author's own badge palette:
+# a deep blue, a teal and a signal red over a charcoal label grey. Colours
 # that carry meaning (VCQI timeliness, MOSV, BeSD, antigens) keep their
 # conventional values. Every colour is overridable
 # through vcs_palette(), and every function that draws something takes a
@@ -25,17 +25,17 @@
 vcs_palette <- function(...) {
   pal <- list(
     # identity
-    primary   = "#055F56",   # Neudata teal (headings, table headers)
-    secondary = "#5FA39B",   # light teal
-    tertiary  = "#D5E9E6",   # pale teal (section rows)
+    primary   = "#11619E",   # badge blue (headings, table headers)
+    secondary = "#3473C1",   # lighter blue
+    tertiary  = "#D6E3EF",   # pale blue (section rows)
     accent    = "#E0A340",   # amber
-    danger    = "#C0504D",   # red
-    info      = "#0B376C",   # Neudata blue
+    danger    = "#C12C12",   # badge red
+    info      = "#128585",   # badge teal
     ink       = "#1A1A1A",
     grey_dk   = "#595959",
     grey      = "#BFBFBF",
     grey_lt   = "#E6E6E6",
-    bar_fill  = "#5FA39B",   # proportional cell shading in bar tables
+    bar_fill  = "#7FB3D5",   # proportional cell shading in bar tables
     # VCTC timeliness segments (VCQI convention)
     timing = c(
       "Too early"        = "#7B2C8A",

@@ -1,0 +1,275 @@
+---
+title: "The vaxsurvR pipeline"
+subtitle: "A visual walk through the workflow, from raw export to coverage estimates"
+author: "Neudata Consulting Ltd"
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+output:
+  pdf_document:
+    toc: false
+    number_sections: true
+    dev: cairo_pdf
+    latex_engine: pdflatex
+    fig_caption: true
+geometry: margin=2cm
+papersize: a4
+colorlinks: true
+linkcolor: NavyBlue
+urlcolor: NavyBlue
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE, message = FALSE, warning = FALSE,
+  fig.align = "center", dpi = 300
+)
+library(vaxsurvR)
+library(ggplot2)
+PAL <- vcs_palette()
+kbl <- function(x, ...) knitr::kable(x, booktabs = TRUE, linesep = "", ...)
+pct <- function(x, d = 1) ifelse(is.na(x), "--", sprintf(paste0("%.", d, "f%%"), 100 * x))
+```
+
+Everything in this document is computed from `vcs_example`, the synthetic
+survey shipped with the package: 600 households, 256 children, 14 antigens,
+with a documented set of deliberately planted data-quality problems. No real
+participant data appears anywhere. Every figure is produced by the function
+named above it, so each page can be reproduced in one line.
+
+# The shape of the workflow
+
+```{r diagram, fig.width = 10, fig.height = 5.6, out.width = "100%", fig.cap = "The five stages: plot\\_vcs\\_pipeline()"}
+# Title and subtitle come from the section heading and the text below, so the
+# figure carries neither. Label text is sized in millimetres while the boxes
+# scale with the canvas, so base_size and fig.width move together: raising one
+# without the other pushes the longer function names outside their box.
+plot_vcs_pipeline(title = NULL, subtitle = NULL)
+```
+
+Read it top to bottom. The first row is the part people most often skip:
+**the survey is described once**, in a schedule and a dictionary, and every
+later call reads those two objects. That is what makes the same script run
+against next round's export without editing a single function.
+
+The two outlined boxes are optional. A survey whose questionnaire has no
+caregiver-recall block simply omits them.
+
+```{r pipeline-table}
+p <- vcs_pipeline()
+tab <- data.frame(
+  Stage = p$stage,
+  Step = p$fn,
+  Required = ifelse(p$optional, "optional", "required"),
+  `What it does` = p$caption,
+  check.names = FALSE
+)
+kbl(tab, caption = "The pipeline as a table: vcs_pipeline()")
+```
+
+\newpage
+
+# Configure: describe the survey once
+
+The **schedule** says which antigens exist, the earliest age each dose may
+validly be given, which dose precedes it and the minimum interval between
+them. Nothing in the package assumes a country's calendar; these are the
+numbers every later check reads.
+
+```{r schedule}
+s <- as.data.frame(vcs_example_schedule)
+kbl(head(s[, c("vaccine", "antigen", "dose", "minimum_age_days",
+                "maximum_age_days", "previous_dose", "minimum_interval_days")], 8),
+    caption = "A vaccination schedule: vcs_schedule()",
+    col.names = c("Vaccine", "Antigen", "Dose", "Min age (d)", "Max age (d)",
+                  "After", "Min interval (d)"))
+```
+
+The **dictionary** maps the export's own variable names onto standardised
+concepts. Wide exports encode repeat groups in the column name, so the
+dictionary takes templates: `{c}` for the caregiver repeat, `{k}` for the
+child, `{vv}` for the zero-padded vaccine index.
+
+```{r dictionary}
+d <- as.data.frame(vcs_example_dictionary)
+kbl(head(d[, c("concept", "source", "level")], 10),
+    caption = "Mapping source variables onto concepts: vcs_dictionary()",
+    col.names = c("Concept", "Source variable", "Level"))
+```
+
+# Import: one object, three tables
+
+`map_vcs_variables()` expands the repeat groups and returns a single object
+holding the household, child and vaccination views side by side, with the raw
+import carried along untouched.
+
+```{r import}
+counts <- summary(vcs_example)$counts
+kbl(data.frame(Level = names(counts), N = as.integer(counts)),
+    caption = "What the mapped object contains: map_vcs_variables()")
+```
+
+A child record is created wherever a repeat slot holds data, so empty slots in
+a wide export never become phantom children.
+
+\newpage
+
+# Check: flag, never silently correct
+
+`validate_vcs()` returns an object, not a printed warning. Every issue carries
+a stable rule identifier, a severity and the record it concerns, so the result
+can be filtered, joined, exported or handed to the field team.
+
+```{r validate}
+qa <- validate_vcs(vcs_example)
+sev <- summary(qa, by = "severity")
+kbl(as.data.frame(sev[, c("group", "n_issues", "n_records")]),
+    caption = "Issues by severity: validate_vcs()",
+    col.names = c("Severity", "Issues", "Records affected"))
+```
+
+```{r issue-plot, fig.width = 8, fig.height = 4.6, out.width = "95%"}
+by_rule <- summary(qa, by = "rule")
+by_rule$group <- factor(by_rule$group, levels = rev(by_rule$group))
+# Order the legend by severity rather than alphabetically.
+by_rule$severity <- factor(by_rule$severity, levels = rev(vcs_severities()))
+sev_cols <- c(INFO = PAL$secondary, WARNING = PAL$accent,
+              ERROR = PAL$danger, CRITICAL = "#7B241C")
+ggplot(by_rule, aes(x = .data$n_issues, y = .data$group, fill = .data$severity)) +
+  geom_col() +
+  scale_fill_manual(values = sev_cols, name = NULL) +
+  labs(x = "Issues", y = NULL,
+       title = "Data-quality issues by rule",
+       subtitle = "Flagged for investigation; no record is dropped") +
+  theme_vcs(base_size = 9) +
+  theme(panel.grid.major.y = element_blank(), legend.position = "bottom")
+```
+
+`clean_vcs()` then applies a ruleset. The default ruleset **flags and changes
+nothing**; any rule that does change a value writes a log line naming the
+record, the variable, the value before and after, the rule, its severity and
+the time.
+
+```{r clean}
+cleaned <- clean_vcs(vcs_example)
+kbl(as.data.frame(summary(cleaned$audit)),
+    caption = "The audit trail: clean_vcs() then audit_changes()",
+    col.names = c("Rule", "Action", "Severity", "Records", "Log entries"))
+```
+
+\newpage
+
+# Derive: say what counts as vaccinated
+
+A coverage figure is meaningless without the definition behind it. The package
+grades the evidence for every dose and makes the definition an argument.
+
+```{r evidence}
+ev <- derive_evidence(vcs_example)$vaccinations$evidence
+t <- as.data.frame(table(ev), stringsAsFactors = FALSE)
+names(t) <- c("Evidence", "Doses")
+t$Share <- pct(t$Doses / sum(t$Doses))
+kbl(t, caption = "Evidence grades: derive_evidence()")
+```
+
+`unknown` is not `none`. A dose with neither a card entry nor a recall answer
+is unknown, and `derive_vaccination_status()` leaves it `NA` rather than
+counting it as unvaccinated, unless you explicitly ask otherwise.
+
+# Estimate: keep the design to the end
+
+```{r estimate, fig.width = 8, fig.height = 5, out.width = "95%"}
+VX <- c("BCG", "PENTA1", "PENTA3", "MCV1")
+est <- estimate_coverage_by_evidence(vcs_example, vaccines = VX)
+e <- as.data.frame(est)
+e$indicator <- factor(e$indicator, levels = rev(VX))
+ggplot(e, aes(x = .data$estimate, y = .data$indicator, colour = .data$evidence)) +
+  geom_errorbarh(aes(xmin = .data$conf_low, xmax = .data$conf_high),
+                 height = 0.22, position = position_dodge(width = 0.6)) +
+  geom_point(size = 2.2, position = position_dodge(width = 0.6)) +
+  scale_x_continuous(labels = function(v) sprintf("%.0f%%", 100 * v),
+                     limits = c(0, 1)) +
+  scale_colour_manual(values = c(Card = PAL$info, Recall = PAL$accent,
+                                 `Card or recall` = PAL$primary), name = NULL) +
+  labs(x = "Coverage", y = NULL,
+       title = "Coverage by source of evidence",
+       subtitle = "estimate_coverage_by_evidence(); every child in every denominator") +
+  theme_vcs(base_size = 9) +
+  theme(panel.grid.major.y = element_blank(), legend.position = "bottom")
+```
+
+The card row is *documented* coverage, not coverage among card holders: a
+child whose card was never seen counts as not documented, which is true. Pass
+`denominator = "determinable"` for the other convention, and say in the report
+which one a table uses.
+
+```{r dropout}
+d2 <- derive_vaccination_status(vcs_example)
+des <- vcs_design(d2)
+keep <- c("indicator", "method", "denominator", "estimate", "conf_low", "conf_high")
+dr <- rbind(
+  as.data.frame(estimate_dropout(des, "PENTA1", "PENTA3",
+                                 method = "individual"))[, keep],
+  as.data.frame(estimate_dropout(des, "PENTA1", "PENTA3",
+                                 method = "coverage"))[, keep]
+)
+kbl(data.frame(
+  Indicator = dr$indicator, Method = dr$method, n = dr$denominator,
+  Estimate = pct(dr$estimate),
+  `95% CI` = sprintf("%s -- %s", pct(dr$conf_low), pct(dr$conf_high)),
+  check.names = FALSE
+), caption = "Two definitions of dropout, both reported: estimate_dropout()")
+```
+
+\newpage
+
+# Tracking fieldwork against the frame
+
+Progress is measured against the **sampling frame**, not the data: a cluster
+that was never visited leaves no trace in the export and can only come from
+the frame.
+
+```{r progress, fig.width = 7.5, fig.height = 4.6, out.width = "90%"}
+raw <- vcs_example_frame_raw
+frame <- read_psu_frame(primary = raw[raw$psu_type == "Primary", ],
+                        backup  = raw[raw$psu_type == "Backup", ])
+pm <- psu_map_data(vcs_example_raw, frame, psu_var = "psu_id",
+                   zone_var = "health_zone", child_marker = "EC_ID",
+                   n_caregivers = 2, n_children = 2)
+plot_admin_progress_bars(admin_map_data(pm, "zone"), target = 0.8)
+```
+
+```{r funnel}
+fn <- psu_map_summary(pm)
+kbl(data.frame(
+  Metric = c("Units in frame", "Units opened", "Units with children",
+             "Units with no eligible child", "Children"),
+  N = c(fn$primary_in_frame, fn$primary_opened, fn$primary_with_children,
+        fn$primary_zero_children, fn$children)
+), caption = "The sampling-unit funnel: psu_map_summary()")
+```
+
+Where a boundary layer is available, `plot_admin_map()` draws the same numbers
+as a choropleth with the sampling units bubbled on top, and units holding no
+data are drawn as "no data" rather than omitted.
+
+# Where to go next
+
+```{r next-steps}
+kbl(data.frame(
+  Topic = c("Getting started", "Mapping your own export", "Quality checks",
+            "De-identification", "Survey analysis", "Coverage indicators",
+            "End to end"),
+  Vignette = c("vignette(\"vaxsurvR\")", "vignette(\"preparing-a-survey\")",
+               "vignette(\"data-quality\")", "vignette(\"deidentification\")",
+               "vignette(\"survey-analysis\")", "vignette(\"coverage-indicators\")",
+               "vignette(\"end-to-end\")"),
+  check.names = FALSE
+), caption = "The seven vignettes, in reading order")
+```
+
+\vfill
+
+\footnotesize
+Produced with `vaxsurvR` `r as.character(utils::packageVersion("vaxsurvR"))`
+on `r format(Sys.Date(), "%d %B %Y")`. Source:
+`inst/pipeline/vaxsurvR-pipeline.Rmd`. Rebuild with
+`rmarkdown::render(system.file("pipeline", "vaxsurvR-pipeline.Rmd", package = "vaxsurvR"))`.

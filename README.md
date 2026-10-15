@@ -46,6 +46,22 @@ vcs_design()  ->  estimate_coverage_by_evidence()              estimate with the
 Each step is a function you can run, inspect and test on its own. There is no
 single `clean_data()` that does everything and shows you nothing.
 
+If the diagram above is hard to follow, the same workflow is set out properly
+in **[the pipeline guide](inst/pipeline/vaxsurvR-pipeline.pdf)** — six pages,
+one stage at a time, every figure computed from the synthetic example so each
+page can be reproduced in a line:
+
+```r
+# the diagram on its own
+plot_vcs_pipeline()
+vcs_pipeline()                       # the same thing as a table
+
+# the whole guide, rebuilt
+rmarkdown::render(
+  system.file("pipeline", "vaxsurvR-pipeline.Rmd", package = "vaxsurvR")
+)
+```
+
 ## End-to-end example
 
 ```r

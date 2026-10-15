@@ -4,3 +4,8 @@
 .Ruserdata
 docs/
 *.Rcheck/
+
+# LaTeX build artefacts from rendering inst/pipeline
+inst/pipeline/*.tex
+inst/pipeline/*.log
+inst/pipeline/*_files/
